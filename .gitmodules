@@ -1,3 +1,0 @@
-[submodule "ext/mrenv"]
-	path = ext/mrenv
-	url = https://github.com/joaosalvado/mr_env.git

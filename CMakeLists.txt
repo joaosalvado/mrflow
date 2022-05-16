@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.16)
 
 # set the project name
 project(mrflow)
@@ -12,23 +12,24 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++17")
 #SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg")
 #SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -pg")
 
-
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 #Project directories
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/bin")
 set(LIBRARY_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/lib")
 set(PROJECT_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include/")
-include_directories(${PROJECT_SOURCE_DIR}/include)
-include_directories(${PROJECT_SOURCE_DIR})
-add_subdirectory(${PROJECT_SOURCE_DIR}/include)
-add_subdirectory(${PROJECT_SOURCE_DIR}/tests)
 
 
 # Dependencies
 find_package( OpenCV REQUIRED)
-include_directories( ${OpenCV_INCLUDE_DIRS} )
+include_directories( ${OpenCV_INCLUDE_DIRS})
 
-# Add external submodule projects
-add_subdirectory(ext/mrenv)
-include_directories(${PROJECT_SOURCE_DIR}/ext/mrenv/include)
-#include_directories(${CMAKE_PROJECT_DIRECTORY}/include/)
+
+include_directories(${PROJECT_SOURCE_DIR}/include/mrflow/mrenv)
+include_directories(${PROJECT_SOURCE_DIR}/include/mrflow)
+include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(${PROJECT_SOURCE_DIR})
+
+# Mrflow library and executables
+add_subdirectory(${PROJECT_SOURCE_DIR}/include)
+add_subdirectory(${PROJECT_SOURCE_DIR}/tests)

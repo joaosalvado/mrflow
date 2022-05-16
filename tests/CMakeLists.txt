@@ -1,16 +1,19 @@
 set( L_EXE "")
-add_executable(main main.cpp)
-#list(APPEND L_EXE 3robots)
+
+set(mrflow_exe "mrflow_exe")
+add_executable(mrflow_exe test.cpp)
+list(APPEND L_EXE mrflow_exe)
 #add_executable(testing testing.cpp)
 
 FOREACH(EXE_NAME IN LISTS L_EXE)
-    target_link_libraries(${EXE_NAME}
-            cfree
-            )
+    #target_include_directories(${EXE_NAME}  PUBLIC
+    #        ${PROJECT_INCLUDE_DIR}
+    #        #PUBLIC ${PROJECT_SOURCE_DIR}/ext/mrenv/include
+    #        )
 
-    target_include_directories(${EXE_NAME}
-            PUBLIC ${PROJECT_INCLUDE_DIR}
-            PUBLIC ${PROJECT_SOURCE_DIR}/ext/mrenv/include
+    target_link_libraries(${EXE_NAME}
+            mrenv
+            #PUBLIC cfree
             )
 
     install (TARGETS ${EXE_NAME} RUNTIME DESTINATION ${EXECUTABLE_OUTPUT_PATH})

@@ -7,4 +7,4 @@ target_link_libraries(cfree ${OpenCV_LIBS})
 
 
 install(TARGETS cfree DESTINATION lib)
-install(FILES ${HEADERS} DESTINATION mrrm/)
+install(FILES ${HEADERS} DESTINATION mrflow/)
