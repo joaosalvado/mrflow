@@ -1,2 +1,1 @@
-add_subdirectory(mrflow/mrenv)
-#add_subdirectory(mrflow/cfree)
+add_subdirectory(mrflow/cfree)

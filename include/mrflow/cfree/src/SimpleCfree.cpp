@@ -47,7 +47,7 @@ void cfree::SimpleCfree::setPolygonTransitionCosts()
     }
 }
 
-/*
+
 void cfree::SimpleCfree::plotCfree()
 {
     double f = mm_px; //0.01;
@@ -92,6 +92,7 @@ void cfree::SimpleCfree::plotCfree()
     cv::waitKey();
 }
 
+ /*
 void cfree::SimpleCfree::plotRectangles(PolygonSet &ps){
     double f = mm_px; //0.01;
     int cfree_xmax = this->getCfreeMaxX() * f;
@@ -131,7 +132,7 @@ void cfree::SimpleCfree::convexPolygon(cv::Mat img, const cv::Point *points, int
                  1,
                  cv::Scalar(100, 100, 50));
 }
-
+*/
 void cfree::SimpleCfree::writeText(cv::Mat img, cv::Point point, const char *message)
 {
     cv::putText(
@@ -169,33 +170,43 @@ void cfree::SimpleCfree::fillPolygon(Mat img, const cv::Point *points, int n_pts
                   1,
                   true,
                   Scalar(240, 50, 200));
-}*/
+}
 
 
-void cfree::SimpleCfree::createSquareCoverage(
-    std::string maps_path,
-    std::string map_file,
-    double scale){
-/*
-    maps_path_ = maps_path; map_file_ = map_file;
-    px_mm = scale;
-    mm_px = 1/scale;
-    if(this->footprint_==nullptr) std::cerr << "[sCfree] Footprint is not defined" << std::endl;
-    tessel.setFootprint(this->footprint_->getLength()*mm_px, this->footprint_->getWidth()*mm_px);
-    tessel.addPathToScenarios(maps_path);
-    tessel.inputScenario(map_file);
-    tessel.coverRectangles();
-
-    auto &&rectangles = tessel.getRectangles();
-    for(auto &&rect : rectangles){
-        int f = 1000/10;
-        Point lb =  this->createPoint(rect->left_bottom_corner.x*px_mm, rect->left_bottom_corner.y*px_mm);
-        Point lu =  this->createPoint(rect->left_bottom_corner.x*px_mm, rect->right_upper_corner.y*px_mm);
-        Point ru =  this->createPoint(rect->right_upper_corner.x*px_mm, rect->right_upper_corner.y*px_mm);
-        Point rb =  this->createPoint(rect->right_upper_corner.x*px_mm, rect->left_bottom_corner.y*px_mm);
-        Polygon poly = this->createPolygon(std::list<Point>({lb,lu,ru,rb,lb}));
+void cfree::SimpleCfree::addMrenvPolygons(
+        std::list<std::shared_ptr<mrenv::Tesselation::Rectangle>> &rects){
+    for(auto &&rect : rects){
+        Geometry::Point lb =  this->createPoint(rect->left_bottom_corner.x*px_mm-5, rect->left_bottom_corner.y*px_mm-5);
+        Geometry::Point lu =  this->createPoint(rect->left_bottom_corner.x*px_mm-5, rect->right_upper_corner.y*px_mm+5);
+        Geometry::Point ru =  this->createPoint(rect->right_upper_corner.x*px_mm+5, rect->right_upper_corner.y*px_mm+5);
+        Geometry::Point rb =  this->createPoint(rect->right_upper_corner.x*px_mm+5, rect->left_bottom_corner.y*px_mm-5);
+        Geometry::Polygon poly = this->createPolygon(std::list<Geometry::Point>({lb,lu,ru,rb,lb}));
         this->addPolygon(poly);
     }
-*/
-
 }
+
+//void cfree::SimpleCfree::createSquareCoverage(
+//    std::string maps_path,
+//    std::string map_file,
+//    double scale){
+//
+//    maps_path_ = maps_path; map_file_ = map_file;
+//    px_mm = scale;
+//    mm_px = 1/scale;
+//    if(this->footprint_==nullptr) std::cerr << "[sCfree] Footprint is not defined" << std::endl;
+//    tessel.setFootprint(this->footprint_->getLength()*mm_px, this->footprint_->getWidth()*mm_px);
+//    tessel.addPathToScenarios(maps_path);
+//    tessel.inputScenario(map_file);
+//    tessel.coverRectangles();
+//
+//    auto &&rectangles = tessel.getRectangles();
+//    for(auto &&rect : rectangles){
+//        int f = 1000/10;
+//        Point lb =  this->createPoint(rect->left_bottom_corner.x*px_mm, rect->left_bottom_corner.y*px_mm);
+//        Point lu =  this->createPoint(rect->left_bottom_corner.x*px_mm, rect->right_upper_corner.y*px_mm);
+//        Point ru =  this->createPoint(rect->right_upper_corner.x*px_mm, rect->right_upper_corner.y*px_mm);
+//        Point rb =  this->createPoint(rect->right_upper_corner.x*px_mm, rect->left_bottom_corner.y*px_mm);
+//        Polygon poly = this->createPolygon(std::list<Point>({lb,lu,ru,rb,lb}));
+//        this->addPolygon(poly);
+//    }
+//}

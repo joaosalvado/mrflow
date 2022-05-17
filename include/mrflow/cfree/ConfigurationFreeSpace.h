@@ -30,7 +30,7 @@ class VehicleFootprint {
 public:
     VehicleFootprint(double length, double width)
             : length_(length), width_(width){ };
-
+    virtual  ~VehicleFootprint() = default;
     /**
      * Return circle radius
      * @return
@@ -128,13 +128,13 @@ namespace mrflow{
              * Include the vehicle footprint in class cfree
              * @param footprint
              */
-            void addVehicleFootprint(VehicleFootprint *footprint) { this->footprint_ = footprint; }
+            void addVehicleFootprint(std::shared_ptr<VehicleFootprint> &footprint) { this->footprint_ = footprint; }
 
             /**
              * Return vehicle footprint
              * @return
              */
-            VehicleFootprint *getVehicleFootprint() const { return this->footprint_; }
+            std::shared_ptr<VehicleFootprint> getVehicleFootprint() const { return this->footprint_; }
 
 
             /**
@@ -196,7 +196,7 @@ namespace mrflow{
 
 
             //Vehicle/Robot Footprint
-            VehicleFootprint *footprint_;
+            std::shared_ptr<VehicleFootprint> footprint_;
 
 
 

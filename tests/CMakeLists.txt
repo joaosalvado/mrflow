@@ -13,6 +13,7 @@ FOREACH(EXE_NAME IN LISTS L_EXE)
 
     target_link_libraries(${EXE_NAME}
             mrenv
+            cfree
             #PUBLIC cfree
             )
 

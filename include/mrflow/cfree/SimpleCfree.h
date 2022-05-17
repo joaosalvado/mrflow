@@ -13,16 +13,16 @@
 #ifndef SIMPLE_CFREE_H
 #define SIMPLE_CFREE_H
 
-/*#include <opencv2/core.hpp>
+#include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
-#include <opencv2/imgproc.hpp>*/
+#include <opencv2/imgproc.hpp>
 
 #include "mrflow/cfree/MetaConfigurationFreeSpace.h"
 #include <iostream>
 
 //Mrenv
-//#include "mrenv/Tesselation.h"
+#include "mrenv/Tesselation.h"
 
 
 namespace mrflow{
@@ -37,10 +37,15 @@ namespace mrflow{
         class SimpleCfree : public MetaConfigurationFreeSpace
         {
         public:
-            double px_mm, mm_px;
+            double px_mm = 1, mm_px = 1, m2mm;
             SimpleCfree(const std::string filename)
                 : MetaConfigurationFreeSpace(filename) {}
-            SimpleCfree() : MetaConfigurationFreeSpace(){};
+            SimpleCfree(double length, double width)
+                : MetaConfigurationFreeSpace(){
+                auto footprint = std::make_shared<VehicleFootprint>(
+                        length*m2mm, width*m2mm);
+                this->addVehicleFootprint(footprint);
+            };
             virtual ~SimpleCfree(){};
 
             virtual void computePolygonsInfo();
@@ -58,12 +63,19 @@ namespace mrflow{
             PoligonsInfo polygon_info_;
             std::vector<std::vector<double>> transition_cost_matrix_;
 
-            void createSquareCoverage(std::string maps_path, std::string map_file, double scale);
+            void createConnectivityGraph(){
+                this->createMetaConnectivityMap_AdjacentPolygons();
+                this->computePolygonsInfo();
+                this->setPolygonTransitionCosts();
+            }
+            void addMrenvPolygons(
+                    std::list<std::shared_ptr<mrenv::Tesselation::Rectangle>> &rects);
+            //void createSquareCoverage(std::string maps_path, std::string map_file, double scale);
             //void plotCoverage() { tessel.plotBestCover(); };
 
-          /*  void line(cv::Mat img, cv::Point start, cv::Point end);
+            void line(cv::Mat img, cv::Point start, cv::Point end);
             void writeText(cv::Mat img, cv::Point poin, const char *message);
-            void fillPolygon(Mat img, const cv::Point *points, int n_pts);*/
+            void fillPolygon(Mat img, const cv::Point *points, int n_pts);
         private:
             //mrenv::Tesselation tessel;
             //void convexPolygon(cv::Mat img, const cv::Point *points, int n_pts);

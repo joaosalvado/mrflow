@@ -249,7 +249,7 @@ void MetaConfigurationFreeSpace::createMetaConnectivityMap_ExpandedPolygons()
 
     for (Polygon &poly : this->_metaPolygons)
     {
-        //gtl::scale_up(poly,1.01);
+        //gtl::scale_up(poly, 1.01);
         _metaPolygonConnectivityAlgorithm.insert(gtl::view_as<gtl::polygon_90_concept>(poly));
     }
 

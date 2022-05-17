@@ -25,10 +25,13 @@ find_package( OpenCV REQUIRED)
 include_directories( ${OpenCV_INCLUDE_DIRS})
 
 
-include_directories(${PROJECT_SOURCE_DIR}/include/mrflow/mrenv)
 include_directories(${PROJECT_SOURCE_DIR}/include/mrflow)
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_SOURCE_DIR})
+
+# External libraries
+include_directories(${PROJECT_SOURCE_DIR}/ext/mr_env/include)
+add_subdirectory(${PROJECT_SOURCE_DIR}/ext/mr_env)
 
 # Mrflow library and executables
 add_subdirectory(${PROJECT_SOURCE_DIR}/include)
