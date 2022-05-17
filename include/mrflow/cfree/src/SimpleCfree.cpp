@@ -176,10 +176,10 @@ void cfree::SimpleCfree::fillPolygon(Mat img, const cv::Point *points, int n_pts
 void cfree::SimpleCfree::addMrenvPolygons(
         std::list<std::shared_ptr<mrenv::Tesselation::Rectangle>> &rects){
     for(auto &&rect : rects){
-        Geometry::Point lb =  this->createPoint(rect->left_bottom_corner.x*px_mm-5, rect->left_bottom_corner.y*px_mm-5);
-        Geometry::Point lu =  this->createPoint(rect->left_bottom_corner.x*px_mm-5, rect->right_upper_corner.y*px_mm+5);
-        Geometry::Point ru =  this->createPoint(rect->right_upper_corner.x*px_mm+5, rect->right_upper_corner.y*px_mm+5);
-        Geometry::Point rb =  this->createPoint(rect->right_upper_corner.x*px_mm+5, rect->left_bottom_corner.y*px_mm-5);
+        Geometry::Point lb =  this->createPoint(rect->left_bottom_corner.x*px_mm-2, rect->left_bottom_corner.y*px_mm-2);
+        Geometry::Point lu =  this->createPoint(rect->left_bottom_corner.x*px_mm-2, rect->right_upper_corner.y*px_mm+2);
+        Geometry::Point ru =  this->createPoint(rect->right_upper_corner.x*px_mm+2, rect->right_upper_corner.y*px_mm+2);
+        Geometry::Point rb =  this->createPoint(rect->right_upper_corner.x*px_mm+2, rect->left_bottom_corner.y*px_mm-2);
         Geometry::Polygon poly = this->createPolygon(std::list<Geometry::Point>({lb,lu,ru,rb,lb}));
         this->addPolygon(poly);
     }

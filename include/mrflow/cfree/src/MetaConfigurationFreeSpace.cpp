@@ -246,6 +246,8 @@ void MetaConfigurationFreeSpace::generateImprovedCfreeMap()
 void MetaConfigurationFreeSpace::createMetaConnectivityMap_ExpandedPolygons()
 {
     //Insert Polygons for connectivity algorithm
+    //gtl::resize(this->_metaPolygons, 0.01);
+    // Expand polygons
 
     for (Polygon &poly : this->_metaPolygons)
     {

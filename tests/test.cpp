@@ -19,22 +19,23 @@ int main(int argc, char** argv) {
     tessel.setMapsPath("../maps/");
     tessel.inputScenario(map_file, length, width);
     tessel.coverRectangles(); // computes the tesselation
-    tessel.plotBestCover();
+    //tessel.plotBestCover();
 
     // 1.2 - Retrieve list of rectangles
     auto rects  = tessel.getRectangles();
 
 
-    // 2 - Polygon Connectivity graph
+    // 2 - Polygon Connectivity graph (working with pixel metric
     auto sCfree
         = std::make_shared<mrflow::cfree::SimpleCfree>(
-                    length*m2mm, width*m2mm);
+                    length*tessel.getPXtoM(), width*tessel.getPXtoM());
     // 2.1 - Add rectangles computed in mrenv
     sCfree->addMrenvPolygons(rects);
     // 2.2 - Create a graph expressing the connectivity between rectangles
     sCfree->createConnectivityGraph();
     sCfree->printMetaPolygons();
-
     sCfree->plotCfree();
+
+
     return 0;
 }
