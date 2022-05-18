@@ -97,32 +97,89 @@ void cfree::SimpleCfree::plotCfree()
     cv::waitKey();
 }
 
- /*
-void cfree::SimpleCfree::plotRectangles(PolygonSet &ps){
-    double f = mm_px; //0.01;
-    int cfree_xmax = this->getCfreeMaxX() * f;
-    int cfree_ymax = this->getCfreeMaxY() * f;
+
+
+void cfree::SimpleCfree::plotMultrobotPath(
+        std::vector<std::vector<int>> path) {
+    // Plot the configuration freespace
+    double f = 1; //0.01;
+    int cfree_xmax = this->getCfreeMaxX() * 1.05 * f;
+    int cfree_ymax = this->getCfreeMaxY() * 1.05 * f;
     int cfree_xmin = this->getCfreeMinX() * f;
     int cfree_ymin = this->getCfreeMinY() * f;
-    cv::Mat img = cv::Mat::zeros(cfree_ymax - cfree_ymin+1, cfree_xmax - cfree_xmin+1, CV_8UC3);
+    cv::Mat img = cv::Mat::zeros(cfree_ymax - cfree_ymin + 1, cfree_xmax - cfree_xmin + 1, CV_8UC3);
     //Plotting polygons with their respective number
-    for (int pol_id = 0; pol_id < ps.size(); ++pol_id)
-    {
-        const auto &pol = ps.at(pol_id);
+    for (int pol_id = 0; pol_id < this->getNumberOfMetaPolygons(); ++pol_id) {
+        const auto &pol = this->_metaPolygons[pol_id];
         cv::Point *points = new cv::Point[pol.coords_.size()];
-        for (auto point_id = 0; point_id < pol.coords_.size(); ++point_id)
-        {
+        for (auto point_id = 0; point_id < pol.coords_.size(); ++point_id) {
             points[point_id] = cv::Point2d(pol.coords_[point_id].x() * f, pol.coords_[point_id].y() * f);
         }
         fillPolygon(img, points, pol.coords_.size());
         const auto &pol_center = this->center(pol);
         writeText(
-            img,
-            cv::Point2d(pol_center.x() * f, pol_center.y() * f),
-            std::string(std::to_string(pol_id)).c_str());
-        cv::imshow("Polygon Set", img);
-        cv::waitKey();
+                img,
+                cv::Point2d(pol_center.x() * f, pol_center.y() * f),
+                std::string(std::to_string(pol_id)).c_str());
+
     }
+
+    // Each robot path
+    int R = path.size();
+    for(int r = 0; r < R; ++r){
+        auto polygons = path[r];
+        for(int p_seq_id = 0; p_seq_id < polygons.size()-1; ++p_seq_id){
+            // polygon ids
+            int p_prev_id = polygons[p_seq_id];
+            int p_next_id = polygons[p_seq_id+1];
+            // polygon
+            auto p_prev = this->getMetaPolygon(p_prev_id);
+            auto p_next = this->getMetaPolygon(p_next_id);
+            // centers
+            const auto &p_prev_center = this->center( p_prev );
+            cv::Point2d p_prev_center_cv = cv::Point2d(p_prev_center.x(), p_prev_center.y());
+            const auto &p_next_center = this->center( p_next );
+            cv::Point2d p_next_center_cv = cv::Point2d(p_next_center.x(), p_next_center.y());
+            // door center
+            auto door_center_px = this->getCenterDoor(p_prev_id, p_next_id);
+            cv::Point2d door_center_cv = cv::Point2d(door_center_px.x(), door_center_px.y() );
+
+            // Plotting lines
+            this->line_color(img, p_prev_center_cv, door_center_cv, r);
+            this->line_color(img, door_center_cv, p_next_center_cv, r);
+
+        }
+    }
+    cv::imshow("Cfree", img);
+    cv::waitKey();
+}
+
+/*
+void cfree::SimpleCfree::plotRectangles(PolygonSet &ps){
+   double f = mm_px; //0.01;
+   int cfree_xmax = this->getCfreeMaxX() * f;
+   int cfree_ymax = this->getCfreeMaxY() * f;
+   int cfree_xmin = this->getCfreeMinX() * f;
+   int cfree_ymin = this->getCfreeMinY() * f;
+   cv::Mat img = cv::Mat::zeros(cfree_ymax - cfree_ymin+1, cfree_xmax - cfree_xmin+1, CV_8UC3);
+   //Plotting polygons with their respective number
+   for (int pol_id = 0; pol_id < ps.size(); ++pol_id)
+   {
+       const auto &pol = ps.at(pol_id);
+       cv::Point *points = new cv::Point[pol.coords_.size()];
+       for (auto point_id = 0; point_id < pol.coords_.size(); ++point_id)
+       {
+           points[point_id] = cv::Point2d(pol.coords_[point_id].x() * f, pol.coords_[point_id].y() * f);
+       }
+       fillPolygon(img, points, pol.coords_.size());
+       const auto &pol_center = this->center(pol);
+       writeText(
+           img,
+           cv::Point2d(pol_center.x() * f, pol_center.y() * f),
+           std::string(std::to_string(pol_id)).c_str());
+       cv::imshow("Polygon Set", img);
+       cv::waitKey();
+   }
 //    cv::imshow("Polygon Set", img);
 //    cv::waitKey();
 
@@ -131,11 +188,11 @@ void cfree::SimpleCfree::plotRectangles(PolygonSet &ps){
 
 void cfree::SimpleCfree::convexPolygon(cv::Mat img, const cv::Point *points, int n_pts)
 {
-    cv::fillPoly(img,
-                 &points,
-                 &n_pts,
-                 1,
-                 cv::Scalar(100, 100, 50));
+   cv::fillPoly(img,
+                &points,
+                &n_pts,
+                1,
+                cv::Scalar(100, 100, 50));
 }
 */
 void cfree::SimpleCfree::writeText(cv::Mat img, cv::Point point, const char *message)
@@ -146,7 +203,7 @@ void cfree::SimpleCfree::writeText(cv::Mat img, cv::Point point, const char *mes
         point,
         1,
         1,
-        cv::Scalar(50, 255, 200));
+        cv::Scalar({50, 255, 200}));
 }
 
 void cfree::SimpleCfree::line(cv::Mat img, cv::Point start, cv::Point end)
@@ -156,7 +213,19 @@ void cfree::SimpleCfree::line(cv::Mat img, cv::Point start, cv::Point end)
     cv::line(img,
              start,
              end,
-             cv::Scalar(255, 0, 0),
+             cv::Scalar( {255, 0, 0}),
+             thickness,
+             lineType);
+}
+
+void cfree::SimpleCfree::line_color(cv::Mat img, cv::Point start, cv::Point end, int r)
+{
+    int thickness = 2;
+    int lineType = cv::LINE_8;
+    cv::line(img,
+             start,
+             end,
+             colors[r],
              thickness,
              lineType);
 }

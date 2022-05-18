@@ -60,6 +60,7 @@ namespace mrflow{
 
             void plotCfree();
             void plotRectangles(PolygonSet &ps);
+            void plotMultrobotPath(std::vector<std::vector<int>> path);
 
             PoligonsInfo polygon_info_;
             std::vector<std::vector<double>> transition_cost_matrix_;
@@ -73,12 +74,27 @@ namespace mrflow{
                     std::list<std::shared_ptr<mrenv::Tesselation::Rectangle>> &rects);
             //void createSquareCoverage(std::string maps_path, std::string map_file, double scale);
             //void plotCoverage() { tessel.plotBestCover(); };
-
+            void line_color(cv::Mat img, cv::Point start, cv::Point end, int r);
             void line(cv::Mat img, cv::Point start, cv::Point end);
             void writeText(cv::Mat img, cv::Point poin, const char *message);
             void fillPolygon(Mat img, const cv::Point *points, int n_pts);
         private:
             double px2m;
+
+            std::vector<cv::Scalar> colors =
+                    {
+                            Scalar(230, 25, 75), Scalar(60, 180, 75), Scalar{255, 225, 25},
+                            Scalar{0, 130, 200},Scalar(240, 50, 230),
+                            Scalar(210, 245, 60), Scalar(250, 190, 212), Scalar(0, 128, 128),
+                            Scalar(220, 190, 255), Scalar(170, 110, 40), Scalar(255, 250, 200),
+                            Scalar(128, 0, 0), Scalar(170, 255, 195), Scalar(128, 128, 0),
+                            Scalar(255, 215, 180), Scalar(0, 0, 128),Scalar(128, 128, 128),
+                            Scalar(0, 0, 64), Scalar(0, 64, 0), Scalar(64, 0, 0),
+                            Scalar(0, 64, 64), Scalar(64, 0, 64), Scalar(64, 64, 0),
+                            Scalar(0, 0, 192), Scalar(0, 192, 0), Scalar(192, 0, 0),
+                            Scalar(0, 192, 192), Scalar(192, 0, 192), Scalar(192, 192, 0),
+                            Scalar(0, 0, 0)
+                    };
             //mrenv::Tesselation tessel;
             //void convexPolygon(cv::Mat img, const cv::Point *points, int n_pts);
 

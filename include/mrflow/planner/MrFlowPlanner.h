@@ -35,6 +35,11 @@ namespace mrflow::planner{
             void setOptimizeMaxTime(){optim = optimize::MAX_TIME;} //default
             void setOptimizeSumTime(){optim = optimize::SUM_TIME;}
 
+
+            void findTransition(
+                    const std::vector<int> &x_prev,
+                    const std::vector<int> &x_next,
+                    int &P_in, int &P_out) const;
             std::vector<std::vector<int>> dummyLabelledPath(
                     std::vector<std::vector<int>> single_move_unlabeled_path);
 
