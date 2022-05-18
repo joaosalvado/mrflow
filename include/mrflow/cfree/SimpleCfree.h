@@ -40,10 +40,11 @@ namespace mrflow{
             double px_mm = 1, mm_px = 1, m2mm;
             SimpleCfree(const std::string filename)
                 : MetaConfigurationFreeSpace(filename) {}
-            SimpleCfree(double length, double width)
+            SimpleCfree(double length, double width, double px2m_)
                 : MetaConfigurationFreeSpace(){
+                this->px2m = px2m_;
                 auto footprint = std::make_shared<VehicleFootprint>(
-                        length*m2mm, width*m2mm);
+                        length, width);
                 this->addVehicleFootprint(footprint);
             };
             virtual ~SimpleCfree(){};
@@ -77,6 +78,7 @@ namespace mrflow{
             void writeText(cv::Mat img, cv::Point poin, const char *message);
             void fillPolygon(Mat img, const cv::Point *points, int n_pts);
         private:
+            double px2m;
             //mrenv::Tesselation tessel;
             //void convexPolygon(cv::Mat img, const cv::Point *points, int n_pts);
 

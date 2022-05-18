@@ -10,7 +10,9 @@ void cfree::SimpleCfree::computePolygonsInfo()
     {
         //Initialize Poligon Info
         Polygon polygon = this->getMetaPolygon(p_id);
-        this->polygon_info_.center.push_back(this->center(polygon));
+        auto center_px = this->center(polygon);
+        auto center_m = createPoint(center_px.x()*px2m, center_px.y()*px2m);
+        this->polygon_info_.center.push_back(center_m);
         this->polygon_info_.maxNumRobots.push_back(this->maxNumberOfRobotsInPolygon(polygon));
     }
 }
@@ -29,17 +31,20 @@ void cfree::SimpleCfree::setPolygonTransitionCosts()
             }
             else if (this->areMetaPolygonsConnected(p1, p2))
             {
-                auto p1_center = this->center(this->getMetaPolygon(p1));
-                auto p2_center = this->center(this->getMetaPolygon(p2));
-                auto door_center = this->getCenterDoor(p1, p2);
+                auto p1_center_px = this->center(this->getMetaPolygon(p1));
+                auto p2_center_px = this->center(this->getMetaPolygon(p2));
+                auto door_center_px = this->getCenterDoor(p1, p2);
+                auto p1_center_m = createPoint(p1_center_px.x()*px2m, p1_center_px.y()*px2m);
+                auto p2_center_m = createPoint(p2_center_px.x()*px2m, p2_center_px.y()*px2m);
+                auto door_center_m = createPoint(door_center_px.x()*px2m, door_center_px.y()*px2m);
 
                 double euclidean_distance_Pin_Dcenter =
-                    std::sqrt(std::pow(p1_center.x() - door_center.x(), 2) +
-                              std::pow(p1_center.y() - door_center.y(), 2));
+                    std::sqrt(std::pow(p1_center_m.x() - door_center_m.x(), 2) +
+                              std::pow(p1_center_m.y() - door_center_m.y(), 2));
 
                 double euclidean_distance_Dcenter_Pout =
-                    std::sqrt(std::pow(door_center.x() - p2_center.x(), 2) +
-                              std::pow(door_center.y() - p2_center.y(), 2));
+                    std::sqrt(std::pow(door_center_m.x() - p2_center_m.x(), 2) +
+                              std::pow(door_center_m.y() - p2_center_m.y(), 2));
 
                 this->transition_cost_matrix_[p1][p2] = euclidean_distance_Pin_Dcenter + euclidean_distance_Dcenter_Pout;
             }

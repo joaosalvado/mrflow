@@ -4,9 +4,16 @@
 
 #include "mrflow/cfree/SimpleCfree.h"
 #include "mrenv/Tesselation.h"
+#include "mrflow/planner/MrFlowPlanner.h"
+#include <random>
+
+bool random_mrstate(std::vector<int> &state, int P, int R,
+                    const std::vector<int> &maxNumRobots);
+
 int main(int argc, char** argv) {
 
     // 0 - Parameters
+    int R = 10;
     double m2mm = 1000.0;
     // 0.1 - Footprint
     int length = 1.5; // meters
@@ -19,7 +26,7 @@ int main(int argc, char** argv) {
     tessel.setMapsPath("../maps/");
     tessel.inputScenario(map_file, length, width);
     tessel.coverRectangles(); // computes the tesselation
-    //tessel.plotBestCover();
+    tessel.plotBestCover();
 
     // 1.2 - Retrieve list of rectangles
     auto rects  = tessel.getRectangles();
@@ -28,7 +35,9 @@ int main(int argc, char** argv) {
     // 2 - Polygon Connectivity graph (working with pixel metric
     auto sCfree
         = std::make_shared<mrflow::cfree::SimpleCfree>(
-                    length*tessel.getPXtoM(), width*tessel.getPXtoM());
+                    length*tessel.MtoPx(),
+                    width*tessel.MtoPx(),
+                    tessel.PxtoM());
     // 2.1 - Add rectangles computed in mrenv
     sCfree->addMrenvPolygons(rects);
     // 2.2 - Create a graph expressing the connectivity between rectangles
@@ -37,5 +46,35 @@ int main(int argc, char** argv) {
     sCfree->plotCfree();
 
 
+    // 3 - Sample start and goal
+    std::vector<int> start, goal;
+    random_mrstate(start, sCfree->getNumberOfMetaPolygons(), R,  sCfree->polygon_info_.maxNumRobots);
+    random_mrstate(goal, sCfree->getNumberOfMetaPolygons(), R, sCfree->polygon_info_.maxNumRobots);
+    // 4 - Multi-robot planner
+    auto mrplanner = std::make_shared<mrflow::planner::MrFlowPlanner>(R,sCfree);
+    std::vector<std::vector<int>> solution;
+    mrplanner->solve(start,goal, solution);
+
+    // 5 - Label the robot path
+    mrplanner->dummyLabelledPath(solution);
+
     return 0;
+}
+
+
+bool random_mrstate(std::vector<int> &state, int P, int R, const std::vector<int> &maxNumberRobots){
+    std::random_device rd; // obtain a random number from hardware
+    std::mt19937 gen(rd()); // seed the generator
+    std::uniform_int_distribution<> distr(0, P-1); // define the range
+    state = std::vector<int>(P,0);
+    while(R>0){
+        // sample polygon
+        int p_id = distr(gen);
+        // add if possible
+        if(state[p_id]+1 <= maxNumberRobots[p_id]){
+            state[p_id]++;
+            R--;
+        }
+    }
+    return true;
 }
