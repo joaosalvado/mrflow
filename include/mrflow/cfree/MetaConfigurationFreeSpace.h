@@ -170,6 +170,7 @@ namespace mrflow
              * and save in an unorered map;
              */
             void computeAllDoorCenters();
+            void computeAllDoorCenters_overlappingPolygons();
 
             /**
             * Get the center of two intersecting polygons that are in a precmputed hash map

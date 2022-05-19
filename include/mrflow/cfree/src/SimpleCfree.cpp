@@ -60,7 +60,12 @@ void cfree::SimpleCfree::plotCfree()
     int cfree_ymax = this->getCfreeMaxY() *1.05* f;
     int cfree_xmin = this->getCfreeMinX() * f;
     int cfree_ymin = this->getCfreeMinY() * f;
+
+
+
+
     cv::Mat img = cv::Mat::zeros(cfree_ymax - cfree_ymin+1, cfree_xmax - cfree_xmin+1, CV_8UC3);
+
     //Plotting polygons with their respective number
     for (int pol_id = 0; pol_id < this->getNumberOfMetaPolygons(); ++pol_id)
     {
@@ -100,32 +105,65 @@ void cfree::SimpleCfree::plotCfree()
 
 
 void cfree::SimpleCfree::plotMultrobotPath(
-        std::vector<std::vector<int>> path) {
+        std::vector<std::vector<int>> path,
+        String file) {
     // Plot the configuration freespace
     double f = 1; //0.01;
     int cfree_xmax = this->getCfreeMaxX() * 1.05 * f;
     int cfree_ymax = this->getCfreeMaxY() * 1.05 * f;
     int cfree_xmin = this->getCfreeMinX() * f;
     int cfree_ymin = this->getCfreeMinY() * f;
-    cv::Mat img = cv::Mat::zeros(cfree_ymax - cfree_ymin + 1, cfree_xmax - cfree_xmin + 1, CV_8UC3);
-    //Plotting polygons with their respective number
-    for (int pol_id = 0; pol_id < this->getNumberOfMetaPolygons(); ++pol_id) {
-        const auto &pol = this->_metaPolygons[pol_id];
-        cv::Point *points = new cv::Point[pol.coords_.size()];
-        for (auto point_id = 0; point_id < pol.coords_.size(); ++point_id) {
-            points[point_id] = cv::Point2d(pol.coords_[point_id].x() * f, pol.coords_[point_id].y() * f);
-        }
-        fillPolygon(img, points, pol.coords_.size());
-        const auto &pol_center = this->center(pol);
-        writeText(
-                img,
-                cv::Point2d(pol_center.x() * f, pol_center.y() * f),
-                std::string(std::to_string(pol_id)).c_str());
 
-    }
+    samples::addSamplesDataSearchPath("../../maps/");
+    std::string image_path = samples::findFile(file);
+    cv::Mat img = imread(image_path, IMREAD_COLOR);
+    //cv::Mat img = cv::Mat::zeros(cfree_ymax - cfree_ymin + 1, cfree_xmax - cfree_xmin + 1, CV_8UC3);
+//    //Plotting polygons with their respective number
+//    for (int pol_id = 0; pol_id < this->getNumberOfMetaPolygons(); ++pol_id) {
+//        const auto &pol = this->_metaPolygons[pol_id];
+//        cv::Point *points = new cv::Point[pol.coords_.size()];
+//        for (auto point_id = 0; point_id < pol.coords_.size(); ++point_id) {
+//            points[point_id] = cv::Point2d(pol.coords_[point_id].x() * f, pol.coords_[point_id].y() * f);
+//        }
+//        fillPolygon(img, points, pol.coords_.size());
+//        const auto &pol_center = this->center(pol);
+//        writeText(
+//                img,
+//                cv::Point2d(pol_center.x() * f, pol_center.y() * f),
+//                std::string(std::to_string(pol_id)).c_str());
+//
+//    }
 
-    // Each robot path
+    // Plot initial and final config
     int R = path.size();
+    for(int r = 0; r < R; ++r){
+        // 1 ) Inital config
+        auto polygons = path[r];
+        // Start config polygon id
+        int p_start_id = polygons[0];
+        // poygon start config
+        auto p_start = this->getMetaPolygon(p_start_id);
+        // center start polygon
+        const auto &p_start_center = this->center( p_start );
+        // Convert ot cv::Point
+        cv::Point2d p_start_center_cv = cv::Point2d(p_start_center.x() +r , p_start_center.y() +r);
+        // Plot circle
+        addFilledCircle(img, p_start_center_cv, r, this->footprint_->getLength()/2);
+
+        // 2) Final config
+        // Final config polygon id
+        int p_final_id = polygons[polygons.size()-1];
+        // poygon final config
+        auto p_final = this->getMetaPolygon(p_final_id);
+        // center final polygon
+        const auto &p_final_center = this->center( p_final );
+        // Convert ot cv::Point
+        cv::Point2d p_final_center_cv = cv::Point2d(p_final_center.x() + r, p_final_center.y() +r);
+        // Plot circle
+        addFilledCircle(img, p_final_center_cv, r, this->footprint_->getLength()/2);
+        addFilledCircle(img, p_final_center_cv, R+1, this->footprint_->getLength()/4);
+    }
+    // Plot path
     for(int r = 0; r < R; ++r){
         auto polygons = path[r];
         for(int p_seq_id = 0; p_seq_id < polygons.size()-1; ++p_seq_id){
@@ -144,14 +182,25 @@ void cfree::SimpleCfree::plotMultrobotPath(
             auto door_center_px = this->getCenterDoor(p_prev_id, p_next_id);
             cv::Point2d door_center_cv = cv::Point2d(door_center_px.x(), door_center_px.y() );
 
-            // Plotting lines
+            // Plotting lines (path)
             this->line_color(img, p_prev_center_cv, door_center_cv, r);
             this->line_color(img, door_center_cv, p_next_center_cv, r);
 
         }
     }
+
     cv::imshow("Cfree", img);
     cv::waitKey();
+}
+
+void cfree::SimpleCfree::addFilledCircle(cv::Mat img, cv::Point center, int r, int radius)
+{
+    cv::circle(img,
+           center,
+           radius,
+           colors[r],
+           FILLED,
+           LINE_8);
 }
 
 /*

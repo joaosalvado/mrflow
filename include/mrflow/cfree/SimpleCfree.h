@@ -60,7 +60,9 @@ namespace mrflow{
 
             void plotCfree();
             void plotRectangles(PolygonSet &ps);
-            void plotMultrobotPath(std::vector<std::vector<int>> path);
+            void plotMultrobotPath(
+                    std::vector<std::vector<int>> path,
+                    String file);
 
             PoligonsInfo polygon_info_;
             std::vector<std::vector<double>> transition_cost_matrix_;
@@ -77,6 +79,7 @@ namespace mrflow{
             void line_color(cv::Mat img, cv::Point start, cv::Point end, int r);
             void line(cv::Mat img, cv::Point start, cv::Point end);
             void writeText(cv::Mat img, cv::Point poin, const char *message);
+            void addFilledCircle(cv::Mat img, cv::Point center, int r, int radius);
             void fillPolygon(Mat img, const cv::Point *points, int n_pts);
         private:
             double px2m;

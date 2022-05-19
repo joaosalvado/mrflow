@@ -33,8 +33,12 @@ Geometry::Polygon Geometry::polygonsIntersection(const Polygon &poly1, const Pol
     //p1 &= p2;
     PolygonSet ps3;
     assign(ps3, ps1 & ps2);
-    //Since polygons will not have inner rings / holes and are convex then the intersection is always ONE polygon
-    return ps3.front();
+    if(ps3.empty()){
+        return createPolygon({});
+    } else {
+        //Since polygons will not have inner rings / holes and are convex then the intersection is always ONE polygon
+        return ps3.front();
+    }
 }
 
 Geometry::Polygon Geometry::polygonsUnion(const Polygon &poly1, const Polygon &poly2)

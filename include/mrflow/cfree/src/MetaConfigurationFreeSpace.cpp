@@ -291,7 +291,8 @@ void MetaConfigurationFreeSpace::createMetaConnectivityMap_AdjacentPolygons()
     this->modifyConnectivityConnected(); //TODO check this when reading from file
 
     //create map
-    this->computeAllDoorCenters();
+    //this->computeAllDoorCenters();
+    this->computeAllDoorCenters_overlappingPolygons();
 }
 
 //Align the Points of the meta polygons such that the
@@ -348,6 +349,40 @@ void MetaConfigurationFreeSpace::leftCornerFirstAlignement()
 
         auto mp_p_new = this->convertGeometricPolygon(mp);
         mp_p = std::move(mp_p_new);
+    }
+}
+
+void MetaConfigurationFreeSpace::computeAllDoorCenters_overlappingPolygons()
+{
+    int P = this->getNumberOfMetaPolygons();
+    if (P == 0)
+    {
+        std::cerr << "There are no meta polygons" << std::endl;
+        return;
+    }
+    for (int p1_id = 0; p1_id < P; ++p1_id)
+    {
+        for (int p2_id = p1_id + 1; p2_id < P; ++p2_id)
+        {
+            if (this->areMetaPolygonsConnected(p1_id, p2_id))
+            {
+                if (this->m_door_center.find({p1_id, p2_id}) == this->m_door_center.end())
+                { //If the key doesn't exist
+                    auto &&P1 = this->getMetaPolygon(p1_id);
+                    auto &&P2 = this->getMetaPolygon(p2_id);
+                    auto intersection_pol = this->polygonsIntersection(P1,P2);
+                    if (intersection_pol.size() == 0)
+                    { //No intersection
+                        continue;
+                    }
+                    else
+                    {
+                        auto &&center = this->center(intersection_pol);
+                        m_door_center[{p1_id, p2_id}] = std::move(center);
+                    }
+                }
+            }
+        }
     }
 }
 
