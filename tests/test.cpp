@@ -16,17 +16,17 @@ int main(int argc, char** argv) {
     int R = 10;
     double m2mm = 1000.0;
     // 0.1 - Footprint
-    int length = 1.5; // meters
+    int length = 1; // meters
     int width = 1;    // meters
     // 0.2 - Map files that is in the maps/ folder
-    std::string map_file = "map-partial-vi";
+    std::string map_file = "map-partial-2";
 
     // 1.1 - Compute a rectangular tesselation of grayscale map
     mrenv::Tesselation tessel;
     tessel.setMapsPath("../maps/");
     tessel.inputScenario(map_file+".yaml", length, width);
     tessel.coverRectangles(); // computes the tesselation
-    tessel.plotBestCover();
+    //tessel.plotBestCover();
 
     // 1.2 - Retrieve list of rectangles
     auto rects  = tessel.getRectangles();
@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
     // 2.2 - Create a graph expressing the connectivity between rectangles
     sCfree->createConnectivityGraph();
     sCfree->printMetaPolygons();
-    sCfree->plotCfree();
+    //sCfree->plotCfree();
 
 
     // 3 - Sample start and goal
@@ -57,7 +57,12 @@ int main(int argc, char** argv) {
 
     // 5 - Label the robot path
     auto mrpath = mrplanner->dummyLabelledPath(solution);
-    sCfree->plotMultrobotPath(mrpath, map_file+".png");
+    //sCfree->plotMultirobotPath(mrpath, map_file+".png");
+
+    for(int r = 0; r < R; ++r ) {
+        sCfree->loadMap(map_file + ".png");
+        sCfree->plotPath(mrpath[r], r);
+    }
 
     return 0;
 }

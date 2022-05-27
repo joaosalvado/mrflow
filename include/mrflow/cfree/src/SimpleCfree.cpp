@@ -4,94 +4,83 @@
 #include <string>
 
 using namespace mrflow;
-void cfree::SimpleCfree::computePolygonsInfo()
-{
-    for (int p_id = 0; p_id < this->getNumberOfMetaPolygons(); ++p_id)
-    {
+
+void cfree::SimpleCfree::computePolygonsInfo() {
+    for (int p_id = 0; p_id < this->getNumberOfMetaPolygons(); ++p_id) {
         //Initialize Poligon Info
         Polygon polygon = this->getMetaPolygon(p_id);
         auto center_px = this->center(polygon);
-        auto center_m = createPoint(center_px.x()*px2m, center_px.y()*px2m);
+        auto center_m = createPoint(center_px.x() * px2m, center_px.y() * px2m);
         this->polygon_info_.center.push_back(center_m);
         this->polygon_info_.maxNumRobots.push_back(this->maxNumberOfRobotsInPolygon(polygon));
     }
 }
 
-void cfree::SimpleCfree::setPolygonTransitionCosts()
-{
+void cfree::SimpleCfree::setPolygonTransitionCosts() {
     auto P = this->getNumberOfMetaPolygons();
     this->transition_cost_matrix_ = std::vector<std::vector<double>>(P, std::vector<double>(P, 0.0));
-    for (auto p1 = 0; p1 < this->getNumberOfMetaPolygons(); ++p1)
-    {
-        for (auto p2 = 0; p2 < this->getNumberOfMetaPolygons(); ++p2)
-        {
-            if (p1 == p2)
-            {
+    for (auto p1 = 0; p1 < this->getNumberOfMetaPolygons(); ++p1) {
+        for (auto p2 = 0; p2 < this->getNumberOfMetaPolygons(); ++p2) {
+            if (p1 == p2) {
                 transition_cost_matrix_[p1][p2] = 0.0;
-            }
-            else if (this->areMetaPolygonsConnected(p1, p2))
-            {
-                auto p1_center_px = this->center(this->getMetaPolygon(p1));
+            //} else if (this->areMetaPolygonsConnected(p1, p2)) {
+            } else if (this->m_door_center.find({p1, p2})
+                            != this->m_door_center.end() ) {
+            auto p1_center_px = this->center(this->getMetaPolygon(p1));
                 auto p2_center_px = this->center(this->getMetaPolygon(p2));
                 auto door_center_px = this->getCenterDoor(p1, p2);
-                auto p1_center_m = createPoint(p1_center_px.x()*px2m, p1_center_px.y()*px2m);
-                auto p2_center_m = createPoint(p2_center_px.x()*px2m, p2_center_px.y()*px2m);
-                auto door_center_m = createPoint(door_center_px.x()*px2m, door_center_px.y()*px2m);
+                auto p1_center_m = createPoint(p1_center_px.x() * px2m, p1_center_px.y() * px2m);
+                auto p2_center_m = createPoint(p2_center_px.x() * px2m, p2_center_px.y() * px2m);
+                auto door_center_m = createPoint(door_center_px.x() * px2m, door_center_px.y() * px2m);
 
                 double euclidean_distance_Pin_Dcenter =
-                    std::sqrt(std::pow(p1_center_m.x() - door_center_m.x(), 2) +
-                              std::pow(p1_center_m.y() - door_center_m.y(), 2));
+                        std::sqrt(std::pow(p1_center_m.x() - door_center_m.x(), 2) +
+                                  std::pow(p1_center_m.y() - door_center_m.y(), 2));
 
                 double euclidean_distance_Dcenter_Pout =
-                    std::sqrt(std::pow(door_center_m.x() - p2_center_m.x(), 2) +
-                              std::pow(door_center_m.y() - p2_center_m.y(), 2));
+                        std::sqrt(std::pow(door_center_m.x() - p2_center_m.x(), 2) +
+                                  std::pow(door_center_m.y() - p2_center_m.y(), 2));
 
-                this->transition_cost_matrix_[p1][p2] = euclidean_distance_Pin_Dcenter + euclidean_distance_Dcenter_Pout;
+                this->transition_cost_matrix_[p1][p2] =
+                        euclidean_distance_Pin_Dcenter + euclidean_distance_Dcenter_Pout;
             }
         }
     }
 }
 
 
-void cfree::SimpleCfree::plotCfree()
-{
+void cfree::SimpleCfree::plotCfree() {
     double f = mm_px; //0.01;
-    int cfree_xmax = this->getCfreeMaxX() *1.05 * f;
-    int cfree_ymax = this->getCfreeMaxY() *1.05* f;
+    int cfree_xmax = this->getCfreeMaxX() * 1.05 * f;
+    int cfree_ymax = this->getCfreeMaxY() * 1.05 * f;
     int cfree_xmin = this->getCfreeMinX() * f;
     int cfree_ymin = this->getCfreeMinY() * f;
 
 
-
-
-    cv::Mat img = cv::Mat::zeros(cfree_ymax - cfree_ymin+1, cfree_xmax - cfree_xmin+1, CV_8UC3);
+    cv::Mat img = cv::Mat::zeros(cfree_ymax - cfree_ymin + 1, cfree_xmax - cfree_xmin + 1, CV_8UC3);
 
     //Plotting polygons with their respective number
-    for (int pol_id = 0; pol_id < this->getNumberOfMetaPolygons(); ++pol_id)
-    {
+    for (int pol_id = 0; pol_id < this->getNumberOfMetaPolygons(); ++pol_id) {
         const auto &pol = this->_metaPolygons[pol_id];
         cv::Point *points = new cv::Point[pol.coords_.size()];
-        for (auto point_id = 0; point_id < pol.coords_.size(); ++point_id)
-        {
+        for (auto point_id = 0; point_id < pol.coords_.size(); ++point_id) {
             points[point_id] = cv::Point2d(pol.coords_[point_id].x() * f, pol.coords_[point_id].y() * f);
         }
         fillPolygon(img, points, pol.coords_.size());
         const auto &pol_center = this->center(pol);
         writeText(
-            img,
-            cv::Point2d(pol_center.x() * f, pol_center.y() * f),
-            std::string(std::to_string(pol_id)).c_str());
+                img,
+                cv::Point2d(pol_center.x() * f, pol_center.y() * f),
+                std::string(std::to_string(pol_id)).c_str());
     }
 
     //Plotting the equivalent connectivity graph
-    for (int p1 = 0; p1 < this->getNumberOfMetaPolygons(); ++p1)
-    {
-        for (int p2 = p1+1; p2 < this->getNumberOfMetaPolygons(); ++p2)
-        {
-            if( this->areMetaPolygonsConnected(p1, p2) ){
-                const auto &p1_center = this->center( this->getMetaPolygon(p1) );
+    for (int p1 = 0; p1 < this->getNumberOfMetaPolygons(); ++p1) {
+        for (int p2 = p1 + 1; p2 < this->getNumberOfMetaPolygons(); ++p2) {
+            if (this->areMetaPolygonsConnected(p1, p2)) {
+                const auto &p1_center = this->center(this->getMetaPolygon(p1));
                 cv::Point2d p1_center_cv = cv::Point2d(p1_center.x() * f, p1_center.y() * f);
-                const auto &p2_center = this->center( this->getMetaPolygon(p2) );
+                const auto &p2_center = this->center(this->getMetaPolygon(p2));
                 cv::Point2d p2_center_cv = cv::Point2d(p2_center.x() * f, p2_center.y() * f);
                 this->line(img, p1_center_cv, p2_center_cv);
             }
@@ -104,39 +93,96 @@ void cfree::SimpleCfree::plotCfree()
 
 
 
-void cfree::SimpleCfree::plotMultrobotPath(
+void cfree::SimpleCfree::loadMap(String file){
+    samples::addSamplesDataSearchPath("../../maps/");
+    std::string image_path = samples::findFile(file);
+    this->img = imread(image_path, IMREAD_COLOR);
+}
+
+void cfree::SimpleCfree::plotPath(std::vector<int> path, int r) {
+    // Plot the configuration freespace
+    int f = 1;
+    for (int pol_id : path) {
+        const auto &pol = this->_metaPolygons[pol_id];
+        cv::Point *points = new cv::Point[pol.coords_.size()];
+        for (auto point_id = 0; point_id < pol.coords_.size(); ++point_id) {
+            points[point_id] = cv::Point2d(pol.coords_[point_id].x() * f, pol.coords_[point_id].y() * f);
+        }
+        fillPolygon(img, points, pol.coords_.size());
+        const auto &pol_center = this->center(pol);
+        writeText(
+                img,
+                cv::Point2d(pol_center.x() * f, pol_center.y() * f),
+                std::string(std::to_string(pol_id)).c_str());
+    }
+    // Plot initial and final config
+    // 1 ) Inital config
+    auto polygons = path;
+    // Start config polygon id
+    int p_start_id = polygons[0];
+    // poygon start config
+    auto p_start = this->getMetaPolygon(p_start_id);
+    // center start polygon
+    const auto &p_start_center = this->center(p_start);
+    // Convert ot cv::Point
+    cv::Point2d p_start_center_cv = cv::Point2d(p_start_center.x(), p_start_center.y());
+    // Plot circle
+    //addFilledCircle(img, p_start_center_cv, r, this->footprint_->getLength() / 2);
+
+// 2) Final config
+// Final config polygon id
+    int p_final_id = polygons[polygons.size() - 1];
+// poygon final config
+    auto p_final = this->getMetaPolygon(p_final_id);
+// center final polygon
+    const auto &p_final_center = this->center(p_final);
+// Convert ot cv::Point
+    cv::Point2d p_final_center_cv = cv::Point2d(p_final_center.x() + r, p_final_center.y() + r);
+// Plot circle
+    addFilledCircle(img, p_final_center_cv, r, this->footprint_->getLength() / 2);
+    //addFilledCircle(img, p_final_center_cv, r, this->footprint_->getLength() / 4);
+
+
+    // Plot path
+    for (int p_seq_id = 0; p_seq_id < polygons.size() - 1; ++p_seq_id) {
+    // polygon ids
+        int p_prev_id = polygons[p_seq_id];
+        int p_next_id = polygons[p_seq_id + 1];
+    // polygon
+        auto p_prev = this->getMetaPolygon(p_prev_id);
+        auto p_next = this->getMetaPolygon(p_next_id);
+    // centers
+        const auto &p_prev_center = this->center(p_prev);
+        cv::Point2d p_prev_center_cv = cv::Point2d(p_prev_center.x(), p_prev_center.y());
+        const auto &p_next_center = this->center(p_next);
+        cv::Point2d p_next_center_cv = cv::Point2d(p_next_center.x(), p_next_center.y());
+    // door center
+        auto door_center_px = this->getCenterDoor(p_prev_id, p_next_id);
+        cv::Point2d door_center_cv = cv::Point2d(door_center_px.x(), door_center_px.y());
+
+    // Plotting lines (path)
+        this->line_color(img, p_prev_center_cv, door_center_cv, r);
+        this->line_color(img, door_center_cv, p_next_center_cv, r);
+
+    }
+
+
+
+    cv::imshow("Cfree", img);
+    cv::waitKey();
+}
+
+void cfree::SimpleCfree::plotMultirobotPath(
         std::vector<std::vector<int>> path,
         String file) {
     // Plot the configuration freespace
-    double f = 1; //0.01;
-    int cfree_xmax = this->getCfreeMaxX() * 1.05 * f;
-    int cfree_ymax = this->getCfreeMaxY() * 1.05 * f;
-    int cfree_xmin = this->getCfreeMinX() * f;
-    int cfree_ymin = this->getCfreeMinY() * f;
-
     samples::addSamplesDataSearchPath("../../maps/");
     std::string image_path = samples::findFile(file);
     cv::Mat img = imread(image_path, IMREAD_COLOR);
-    //cv::Mat img = cv::Mat::zeros(cfree_ymax - cfree_ymin + 1, cfree_xmax - cfree_xmin + 1, CV_8UC3);
-//    //Plotting polygons with their respective number
-//    for (int pol_id = 0; pol_id < this->getNumberOfMetaPolygons(); ++pol_id) {
-//        const auto &pol = this->_metaPolygons[pol_id];
-//        cv::Point *points = new cv::Point[pol.coords_.size()];
-//        for (auto point_id = 0; point_id < pol.coords_.size(); ++point_id) {
-//            points[point_id] = cv::Point2d(pol.coords_[point_id].x() * f, pol.coords_[point_id].y() * f);
-//        }
-//        fillPolygon(img, points, pol.coords_.size());
-//        const auto &pol_center = this->center(pol);
-//        writeText(
-//                img,
-//                cv::Point2d(pol_center.x() * f, pol_center.y() * f),
-//                std::string(std::to_string(pol_id)).c_str());
-//
-//    }
 
     // Plot initial and final config
     int R = path.size();
-    for(int r = 0; r < R; ++r){
+    for (int r = 0; r < R; ++r) {
         // 1 ) Inital config
         auto polygons = path[r];
         // Start config polygon id
@@ -144,43 +190,43 @@ void cfree::SimpleCfree::plotMultrobotPath(
         // poygon start config
         auto p_start = this->getMetaPolygon(p_start_id);
         // center start polygon
-        const auto &p_start_center = this->center( p_start );
+        const auto &p_start_center = this->center(p_start);
         // Convert ot cv::Point
-        cv::Point2d p_start_center_cv = cv::Point2d(p_start_center.x() +r , p_start_center.y() +r);
+        cv::Point2d p_start_center_cv = cv::Point2d(p_start_center.x() + r, p_start_center.y() + r);
         // Plot circle
-        addFilledCircle(img, p_start_center_cv, r, this->footprint_->getLength()/2);
+        addFilledCircle(img, p_start_center_cv, r, this->footprint_->getLength() / 2);
 
         // 2) Final config
         // Final config polygon id
-        int p_final_id = polygons[polygons.size()-1];
+        int p_final_id = polygons[polygons.size() - 1];
         // poygon final config
         auto p_final = this->getMetaPolygon(p_final_id);
         // center final polygon
-        const auto &p_final_center = this->center( p_final );
+        const auto &p_final_center = this->center(p_final);
         // Convert ot cv::Point
-        cv::Point2d p_final_center_cv = cv::Point2d(p_final_center.x() + r, p_final_center.y() +r);
+        cv::Point2d p_final_center_cv = cv::Point2d(p_final_center.x() + r, p_final_center.y() + r);
         // Plot circle
-        addFilledCircle(img, p_final_center_cv, r, this->footprint_->getLength()/2);
-        addFilledCircle(img, p_final_center_cv, R+1, this->footprint_->getLength()/4);
+        addFilledCircle(img, p_final_center_cv, r, this->footprint_->getLength() / 2);
+        addFilledCircle(img, p_final_center_cv, R + 1, this->footprint_->getLength() / 4);
     }
     // Plot path
-    for(int r = 0; r < R; ++r){
+    for (int r = 0; r < R; ++r) {
         auto polygons = path[r];
-        for(int p_seq_id = 0; p_seq_id < polygons.size()-1; ++p_seq_id){
+        for (int p_seq_id = 0; p_seq_id < polygons.size() - 1; ++p_seq_id) {
             // polygon ids
             int p_prev_id = polygons[p_seq_id];
-            int p_next_id = polygons[p_seq_id+1];
+            int p_next_id = polygons[p_seq_id + 1];
             // polygon
             auto p_prev = this->getMetaPolygon(p_prev_id);
             auto p_next = this->getMetaPolygon(p_next_id);
             // centers
-            const auto &p_prev_center = this->center( p_prev );
+            const auto &p_prev_center = this->center(p_prev);
             cv::Point2d p_prev_center_cv = cv::Point2d(p_prev_center.x(), p_prev_center.y());
-            const auto &p_next_center = this->center( p_next );
+            const auto &p_next_center = this->center(p_next);
             cv::Point2d p_next_center_cv = cv::Point2d(p_next_center.x(), p_next_center.y());
             // door center
             auto door_center_px = this->getCenterDoor(p_prev_id, p_next_id);
-            cv::Point2d door_center_cv = cv::Point2d(door_center_px.x(), door_center_px.y() );
+            cv::Point2d door_center_cv = cv::Point2d(door_center_px.x(), door_center_px.y());
 
             // Plotting lines (path)
             this->line_color(img, p_prev_center_cv, door_center_cv, r);
@@ -193,14 +239,13 @@ void cfree::SimpleCfree::plotMultrobotPath(
     cv::waitKey();
 }
 
-void cfree::SimpleCfree::addFilledCircle(cv::Mat img, cv::Point center, int r, int radius)
-{
+void cfree::SimpleCfree::addFilledCircle(cv::Mat img, cv::Point center, int r, int radius) {
     cv::circle(img,
-           center,
-           radius,
-           colors[r],
-           FILLED,
-           LINE_8);
+               center,
+               radius,
+               colors[r],
+               FILLED,
+               LINE_8);
 }
 
 /*
@@ -244,31 +289,28 @@ void cfree::SimpleCfree::convexPolygon(cv::Mat img, const cv::Point *points, int
                 cv::Scalar(100, 100, 50));
 }
 */
-void cfree::SimpleCfree::writeText(cv::Mat img, cv::Point point, const char *message)
-{
+void cfree::SimpleCfree::writeText(cv::Mat img, cv::Point point, const char *message) {
     cv::putText(
-        img,
-        message,
-        point,
-        1,
-        1,
-        cv::Scalar({50, 255, 200}));
+            img,
+            message,
+            point,
+            1,
+            1,
+            cv::Scalar({50, 255, 200}));
 }
 
-void cfree::SimpleCfree::line(cv::Mat img, cv::Point start, cv::Point end)
-{
+void cfree::SimpleCfree::line(cv::Mat img, cv::Point start, cv::Point end) {
     int thickness = 2;
     int lineType = cv::LINE_8;
     cv::line(img,
              start,
              end,
-             cv::Scalar( {255, 0, 0}),
+             cv::Scalar({255, 0, 0}),
              thickness,
              lineType);
 }
 
-void cfree::SimpleCfree::line_color(cv::Mat img, cv::Point start, cv::Point end, int r)
-{
+void cfree::SimpleCfree::line_color(cv::Mat img, cv::Point start, cv::Point end, int r) {
     int thickness = 2;
     int lineType = cv::LINE_8;
     cv::line(img,
@@ -279,31 +321,35 @@ void cfree::SimpleCfree::line_color(cv::Mat img, cv::Point start, cv::Point end,
              lineType);
 }
 
-void cfree::SimpleCfree::fillPolygon(Mat img, const cv::Point *points, int n_pts){
-     fillPoly(img,
-                 &points,
-                 &n_pts,
-                 1,
-                 Scalar(50, 100, 50),
-                 LINE_8);
+void cfree::SimpleCfree::fillPolygon(Mat img, const cv::Point *points, int n_pts) {
+    fillPoly(img,
+             &points,
+             &n_pts,
+             1,
+             Scalar(50, 100, 50),
+             LINE_8);
 
-        polylines(img,
-                  &points,
-                  &n_pts,
-                  1,
-                  true,
-                  Scalar(240, 50, 200));
+    polylines(img,
+              &points,
+              &n_pts,
+              1,
+              true,
+              Scalar(240, 50, 200));
 }
 
 
 void cfree::SimpleCfree::addMrenvPolygons(
-        std::list<std::shared_ptr<mrenv::Tesselation::Rectangle>> &rects){
-    for(auto &&rect : rects){
-        Geometry::Point lb =  this->createPoint(rect->left_bottom_corner.x*px_mm-2, rect->left_bottom_corner.y*px_mm-2);
-        Geometry::Point lu =  this->createPoint(rect->left_bottom_corner.x*px_mm-2, rect->right_upper_corner.y*px_mm+2);
-        Geometry::Point ru =  this->createPoint(rect->right_upper_corner.x*px_mm+2, rect->right_upper_corner.y*px_mm+2);
-        Geometry::Point rb =  this->createPoint(rect->right_upper_corner.x*px_mm+2, rect->left_bottom_corner.y*px_mm-2);
-        Geometry::Polygon poly = this->createPolygon(std::list<Geometry::Point>({lb,lu,ru,rb,lb}));
+        std::list<std::shared_ptr<mrenv::Tesselation::Rectangle>> &rects) {
+    for (auto &&rect: rects) {
+        Geometry::Point lb = this->createPoint(rect->left_bottom_corner.x * px_mm - 2,
+                                               rect->left_bottom_corner.y * px_mm - 2);
+        Geometry::Point lu = this->createPoint(rect->left_bottom_corner.x * px_mm - 2,
+                                               rect->right_upper_corner.y * px_mm + 2);
+        Geometry::Point ru = this->createPoint(rect->right_upper_corner.x * px_mm + 2,
+                                               rect->right_upper_corner.y * px_mm + 2);
+        Geometry::Point rb = this->createPoint(rect->right_upper_corner.x * px_mm + 2,
+                                               rect->left_bottom_corner.y * px_mm - 2);
+        Geometry::Polygon poly = this->createPolygon(std::list<Geometry::Point>({lb, lu, ru, rb, lb}));
         this->addPolygon(poly);
     }
 }
