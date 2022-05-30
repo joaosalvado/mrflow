@@ -4,6 +4,7 @@
 #include "mrflow/base/MultirobotNetwork.hpp"
 #include "mrflow/base/FlowRobots.hpp"
 #include "mrflow/cfree/SimpleCfree.h"
+#include "mrflow/planner/PathGenerator.h"
 namespace mrflow::planner{
         enum optimize {SUM_TIME, MAX_TIME};
         class MrFlowPlanner
@@ -13,6 +14,7 @@ namespace mrflow::planner{
             {
                 this->R = numberRobots;
                 this->cfree = cfree_;
+                this->path_generator_ = std::make_shared<mrflow::planner::PathGenerator>(this->cfree);
                 this->P = this->cfree->getNumberOfMetaPolygons();
                 double cost_stay_default = 0.1;
                 this->cost_stay_ = std::vector<double>(this->P, cost_stay_default);
@@ -52,10 +54,13 @@ namespace mrflow::planner{
             std::shared_ptr<mrflow::cfree::SimpleCfree> cfree;
             std::shared_ptr<mrflow::base::MultirobotNetwork> mrnet_;
             std::shared_ptr<mrflow::base::FlowRobots> fr_;
+            std::shared_ptr<mrflow::planner::PathGenerator> path_generator_;
             std::vector<double> cost_stay_;
             optimize optim;
             int P; // Number of polygons
             int R; // Number of robots
+
+            void getMrPath(std::vector<std::vector<int>> solution);
 
 
 //            ompl::base::State* toUnlabledState(

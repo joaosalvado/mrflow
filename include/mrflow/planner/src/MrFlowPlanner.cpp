@@ -29,9 +29,11 @@ bool mrflow::planner::MrFlowPlanner::solve(
     std::vector<std::vector<int>> flow_solution;
     //flow_solution = this->fr_->getAbstractPath(this->mrnet_);
     this->fr_->toSingleMove(this->mrnet_, flow_solution);
-    fr_->printAbstractPath(flow_solution); //TODO: comment me
+    //fr_->printAbstractPath(flow_solution); //TODO: comment me
 
     solution = flow_solution;
+
+    this->getMrPath(solution); // TODO: handle way to return path
     return solved;
 }
 
@@ -141,3 +143,10 @@ void mrflow::planner::MrFlowPlanner::setup()
     std::cout << "[Mrflow] Network generated\n";
 }
 
+
+void mrflow::planner::MrFlowPlanner::getMrPath(std::vector<std::vector<int>> solution_){
+    // Sequence of polygons
+    auto robot_polygons_path = this->dummyLabelledPath(solution_);
+    this->path_generator_->createPath(robot_polygons_path[0]);
+
+}

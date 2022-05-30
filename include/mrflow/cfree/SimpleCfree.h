@@ -82,6 +82,8 @@ namespace mrflow{
             void writeText(cv::Mat img, cv::Point poin, const char *message);
             void addFilledCircle(cv::Mat img, cv::Point center, int r, int radius);
             void fillPolygon(Mat img, const cv::Point *points, int n_pts);
+            void addFillPolygon(Mat img, Polygon pol);
+            cv::Mat getNewImage(String file );
         private:
             double px2m;
             cv::Mat img;

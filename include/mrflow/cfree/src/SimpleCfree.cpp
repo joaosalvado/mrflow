@@ -99,6 +99,15 @@ void cfree::SimpleCfree::loadMap(String file){
     this->img = imread(image_path, IMREAD_COLOR);
 }
 
+
+void cfree::SimpleCfree::addFillPolygon(Mat img, Polygon pol){
+    cv::Point *points = new cv::Point[pol.coords_.size()];
+    for (auto point_id = 0; point_id < pol.coords_.size(); ++point_id) {
+        points[point_id] = cv::Point2d(pol.coords_[point_id].x() , pol.coords_[point_id].y());
+    }
+    fillPolygon(img, points, pol.coords_.size());
+}
+
 void cfree::SimpleCfree::plotPath(std::vector<int> path, int r) {
     // Plot the configuration freespace
     int f = 1;
@@ -170,6 +179,12 @@ void cfree::SimpleCfree::plotPath(std::vector<int> path, int r) {
 
     cv::imshow("Cfree", img);
     cv::waitKey();
+}
+
+cv::Mat cfree::SimpleCfree::getNewImage(String file){
+    samples::addSamplesDataSearchPath("../../maps/");
+    std::string image_path = samples::findFile(file);
+    return imread(image_path, IMREAD_COLOR);
 }
 
 void cfree::SimpleCfree::plotMultirobotPath(

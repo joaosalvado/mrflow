@@ -25,6 +25,24 @@ Geometry::Polygon Geometry::createPolygon(std::list<Point> &&listPoints)
     return poly;
 }
 
+
+Geometry::Polygon Geometry::convexhull( Polygon polygon ){
+    auto polygon_g = convertPolygonGeometric( polygon );
+    Polygon_g output;
+    boost::geometry::convex_hull(polygon_g, output);
+    return convertGeometricPolygon(output );
+}
+
+Geometry::Polygon Geometry::polygonMinus(
+        Polygon convexhull,
+        Polygon unionpol){
+    PolygonSet ps1{convexhull}, ps2{unionpol};
+    PolygonSet ps3;
+    assign(ps3, ps1 - ps2);
+
+    return ps3.front();
+}
+
 Geometry::Polygon Geometry::polygonsIntersection(const Polygon &poly1, const Polygon &poly2)
 {
     PolygonSet ps1{poly1}, ps2{poly2};

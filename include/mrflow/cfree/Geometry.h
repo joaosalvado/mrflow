@@ -73,6 +73,12 @@ public:
     static Polygon polygonSetIntersection(const PolygonSet &Polygons);
 
 
+    static Polygon convexhull( Polygon polygon );
+    static Polygon polygonMinus(
+            Polygon convexhull,
+            Polygon unionpol);
+
+
     /**
     * Translate polygon poly 4 points into x y bounds
     * @param poly
