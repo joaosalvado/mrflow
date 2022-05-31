@@ -30,7 +30,6 @@ void PathGenerator::createOfreeBit(
     mrflow::cfree::Geometry::Polygon pol_union;
     this->simpleCfree->unionConvex(pol1, pol2, pol_union);
     auto convexhull = this->simpleCfree->convexhull(pol_union);
-
     this->simpleCfree->addFillPolygon(test_img, convexhull);
     cv::imshow("test", test_img);
     cv::waitKey();
@@ -42,9 +41,17 @@ void PathGenerator::createOfreeBit(
 
 
     test_img = this->simpleCfree->getNewImage("map-partial-2.png"); // TODO: remove me
+    auto splited =this->simpleCfree->split(pol_union);
+    for(auto pol : splited){
+        this->simpleCfree->addFillPolygon(test_img, pol);
+    }
+    cv::imshow("test", test_img);
+    cv::waitKey();
+
+    test_img = this->simpleCfree->getNewImage("map-partial-2.png"); // TODO: remove me
     auto obstacles = this->simpleCfree->polygonMinus(convexhull,pol_union);
     for(auto obstacle : obstacles){
-        this->simpleCfree->addFillPolygon(test_img, this->simpleCfree->createPolygon({obstacle}));}
+        this->simpleCfree->addFillPolygon(test_img, obstacle);}
     cv::imshow("test", test_img);
     cv::waitKey();
 

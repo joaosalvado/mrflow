@@ -254,7 +254,7 @@ namespace mrflow
             /**
              * Creates topological graph of the cfree with respect to the meta polygons
              */
-            void createMetaConnectivityMap_ExpandedPolygons();
+            std::vector<std::vector<int>> connectivity_graph(PolygonSet polygons);
 
             /**
              * Polygons provided in the file are overlapping

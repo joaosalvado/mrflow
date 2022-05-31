@@ -74,9 +74,12 @@ public:
 
 
     static Polygon convexhull( Polygon polygon );
-    static Polygon polygonMinus(
+
+    static PolygonSet polygonMinus(
             Polygon convexhull,
             Polygon unionpol);
+
+    static PolygonSet split( Polygon pol);
 
 
     /**

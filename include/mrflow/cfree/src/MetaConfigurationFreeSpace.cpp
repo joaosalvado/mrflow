@@ -232,7 +232,7 @@ void MetaConfigurationFreeSpace::generateImprovedCfreeMap()
 
     this->_numberMetaPolygons = this->_metaPolygons.size();
 
-    this->createMetaConnectivityMap_ExpandedPolygons();
+    this->_metaConnectivityMap = this->connectivity_graph(this->_metaPolygons);
     this->leftCornerFirstAlignement();
 
     //create map
@@ -243,13 +243,13 @@ void MetaConfigurationFreeSpace::generateImprovedCfreeMap()
     // }
 }
 
-void MetaConfigurationFreeSpace::createMetaConnectivityMap_ExpandedPolygons()
+std::vector<std::vector<int>> MetaConfigurationFreeSpace::connectivity_graph(PolygonSet polygons)
 {
     //Insert Polygons for connectivity algorithm
     //gtl::resize(this->_metaPolygons, 0.01);
     // Expand polygons
 
-    for (Polygon &poly : this->_metaPolygons)
+    for (Polygon &poly : polygons)
     {
         //gtl::scale_up(poly, 1.01);
         _metaPolygonConnectivityAlgorithm.insert(gtl::view_as<gtl::polygon_90_concept>(poly));
@@ -260,17 +260,19 @@ void MetaConfigurationFreeSpace::createMetaConnectivityMap_ExpandedPolygons()
     //populate the graph with edge data -> less expensive computation, more difficult to work with
     _metaPolygonConnectivityAlgorithm.extract(graph);
 
-    this->_metaConnectivityMap.resize(this->_metaPolygons.size());
+    std::vector<std::vector<int>> connectivity_graph;
+    connectivity_graph.resize(this->_metaPolygons.size());
     //Change the structure of the graph to a vector of vectors
     int polyId = 0;
     for (std::set<int> adjacencyList : graph)
     {
         for (auto it = adjacencyList.begin(); it != adjacencyList.end(); ++it)
         {
-            this->_metaConnectivityMap[polyId].push_back(*it);
+            connectivity_graph[polyId].push_back(*it);
         }
         ++polyId;
     }
+    return connectivity_graph;
 }
 
 void MetaConfigurationFreeSpace::createMetaConnectivityMap_OverlapingPolygons()
@@ -282,7 +284,7 @@ void MetaConfigurationFreeSpace::createMetaConnectivityMap_OverlapingPolygons()
 void MetaConfigurationFreeSpace::createMetaConnectivityMap_AdjacentPolygons()
 {
     this->_metaPolygons = this->_polygonSet;
-    this->createMetaConnectivityMap_ExpandedPolygons();
+    this->_metaConnectivityMap = this->connectivity_graph(this->_metaPolygons);
 
     this->_numberMetaPolygons = this->_metaPolygons.size();
 

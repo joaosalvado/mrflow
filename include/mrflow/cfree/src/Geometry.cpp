@@ -33,14 +33,21 @@ Geometry::Polygon Geometry::convexhull( Polygon polygon ){
     return convertGeometricPolygon(output );
 }
 
-Geometry::Polygon Geometry::polygonMinus(
+Geometry::PolygonSet Geometry::polygonMinus(
         Polygon convexhull,
         Polygon unionpol){
     PolygonSet ps1{convexhull}, ps2{unionpol};
     PolygonSet ps3;
     assign(ps3, ps1 - ps2);
 
-    return ps3.front();
+    return ps3;
+}
+
+
+Geometry::PolygonSet Geometry::split( Polygon pol){
+    PolygonSet output;
+    boost::polygon::get_trapezoids(output, gtl::view_as<boost::polygon::polygon_45_concept>(pol));
+    return output;
 }
 
 Geometry::Polygon Geometry::polygonsIntersection(const Polygon &poly1, const Polygon &poly2)

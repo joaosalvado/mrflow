@@ -87,6 +87,12 @@ void cfree::SimpleCfree::plotCfree() {
         }
     }
 
+    // Plot the obstcles
+    for( auto obstacle : obstacles){
+        cv::ellipse(img,{obstacle->center.x(), obstacle->center.y()},
+                    {(int)obstacle->major_axis, (int)obstacle->minor_axis},
+                    0,0,360,Scalar(50,50,50),4);
+    }
     cv::imshow("Cfree", img);
     cv::waitKey();
 }
@@ -369,28 +375,99 @@ void cfree::SimpleCfree::addMrenvPolygons(
     }
 }
 
-//void cfree::SimpleCfree::createSquareCoverage(
-//    std::string maps_path,
-//    std::string map_file,
-//    double scale){
-//
-//    maps_path_ = maps_path; map_file_ = map_file;
-//    px_mm = scale;
-//    mm_px = 1/scale;
-//    if(this->footprint_==nullptr) std::cerr << "[sCfree] Footprint is not defined" << std::endl;
-//    tessel.setFootprint(this->footprint_->getLength()*mm_px, this->footprint_->getWidth()*mm_px);
-//    tessel.addPathToScenarios(maps_path);
-//    tessel.inputScenario(map_file);
-//    tessel.coverRectangles();
-//
-//    auto &&rectangles = tessel.getRectangles();
-//    for(auto &&rect : rectangles){
-//        int f = 1000/10;
-//        Point lb =  this->createPoint(rect->left_bottom_corner.x*px_mm, rect->left_bottom_corner.y*px_mm);
-//        Point lu =  this->createPoint(rect->left_bottom_corner.x*px_mm, rect->right_upper_corner.y*px_mm);
-//        Point ru =  this->createPoint(rect->right_upper_corner.x*px_mm, rect->right_upper_corner.y*px_mm);
-//        Point rb =  this->createPoint(rect->right_upper_corner.x*px_mm, rect->left_bottom_corner.y*px_mm);
-//        Polygon poly = this->createPolygon(std::list<Point>({lb,lu,ru,rb,lb}));
-//        this->addPolygon(poly);
-//    }
-//}
+
+
+void cfree::SimpleCfree::addObstacles(std::vector<std::vector<cv::Point> > obstacles){
+    PolygonSet obstacles_nonconvex;
+    // Handle obstacles connected to the outter ring
+    auto outter_ring = obstacles.front();
+    std::list<Point> points;
+    for(auto point : outter_ring){
+        points.push_back({point.x, point.y});
+    }
+    points.push_back({outter_ring[0].x, outter_ring[0].y});
+    auto outter_ring_pol = createPolygon(points);
+
+    auto outter_ring_pol_convexhull = convexhull(outter_ring_pol);
+    auto outter_ring_obstacles = polygonMinus(outter_ring_pol_convexhull,outter_ring_pol);
+    for(auto obstacle : outter_ring_obstacles){obstacles_nonconvex.push_back(obstacle);}
+
+    obstacles.erase(obstacles.begin()); // remove outter ring
+    // Converting obstacles inside outter ring into polygons
+    for(auto obstacle : obstacles){
+        std::list<Point> points;
+        for(auto point : obstacle){
+            points.push_back({point.x, point.y});
+        }
+        points.push_back({obstacle[0].x, obstacle[0].y});
+        obstacles_nonconvex.push_back(createPolygon(points));
+    }
+    // Split each obstacle
+    for(auto obstacle_noncovex : obstacles_nonconvex){
+        auto obstacles_convex = split(obstacle_noncovex);
+        for(auto obstacle_convex : obstacles_convex){
+            auto rectangle = gtl::view_as<gtl::rectangle_concept>(obstacle_convex);
+            auto dx_ = boost::polygon::horizontal(rectangle);
+            auto dx = dx_.high()-dx_.low();
+            auto dy_ = boost::polygon::vertical(rectangle);
+            auto dy = dy_.high()-dy_.low();
+            Point center; boost::polygon::center(center, rectangle);
+            double major_axis = dx/ sqrt(2);
+            double minor_axis = dy/ sqrt(2);
+
+            if(dx == 1 || dy ==1) continue;
+
+            this->obstacles.push_back(std::make_shared<mrflow::cfree::Obstacle>(Obstacle{major_axis,minor_axis,center,obstacle_convex}));
+        }
+    }
+
+
+
+}
+
+
+void cfree::SimpleCfree::plotObstacles(String file){
+
+    cv::Mat test_img = getNewImage(file); // TODO: remove me
+    for( auto obstacle : obstacles){
+        addFillPolygon(test_img, obstacle->bb);
+        cv::ellipse(test_img,{obstacle->center.x(), obstacle->center.y()},
+                {(int)obstacle->major_axis, (int)obstacle->minor_axis},
+                0,0,360,Scalar(50,50,50),4);
+    }
+    cv::imshow("obstacles_ellipses", test_img);
+    cv::waitKey();
+}
+
+void cfree::SimpleCfree::updateConnectivityGraphWithObstacles(){
+    auto P = this->_metaConnectivityMap.size(); // amount of polygons
+    // Generate ellipse obstacles boundind boxes
+    PolygonSet  obstacles_bb;
+    for(auto obstacle : obstacles) {
+        Geometry::Point lb = this->createPoint(obstacle->center.x() - obstacle->major_axis,
+                                               obstacle->center.y() - obstacle->minor_axis);
+        Geometry::Point lu = this->createPoint( obstacle->center.x() - obstacle->major_axis,
+                                                obstacle->center.y() + obstacle->major_axis);
+        Geometry::Point ru = this->createPoint(obstacle->center.x() + obstacle->major_axis,
+                                               obstacle->center.y() + obstacle->major_axis);
+        Geometry::Point rb = this->createPoint(obstacle->center.x() + obstacle->major_axis,
+                                               obstacle->center.y() - obstacle->major_axis);
+        Geometry::Polygon poly = this->createPolygon(std::list<Geometry::Point>({lb, lu, ru, rb, lb}));
+        obstacles_bb.push_back(poly);
+    }
+
+
+    for(int p1 = 0; p1 < P; ++p1){
+         for(int p2 = 0; p2 < this->_metaConnectivityMap.size(); ++p2){
+             auto ofreebit = std::make_shared<cfree::OfreePiece>();
+            auto p1p2 = std::make_pair(p1,p2);
+            // Compute Convex Hull
+            auto pol1 = this->getMetaPolygon(p1); auto pol2 = this->getMetaPolygon(p2);
+            mrflow::cfree::Geometry::Polygon pol1pol2_union;
+            unionConvex(pol1, pol2, pol1pol2_union);
+            auto pol1pol2_convexhull = this->convexhull(pol1pol2_union);
+            //
+
+         }
+    }
+}

@@ -19,18 +19,20 @@ int main(int argc, char** argv) {
     int length = 1; // meters
     int width = 1;    // meters
     // 0.2 - Map files that is in the maps/ folder
-    std::string map_file = "map-partial-2";
+    std::string map_file = "map-partial-3";
 
     // 1.1 - Compute a rectangular tesselation of grayscale map
     mrenv::Tesselation tessel;
     tessel.setMapsPath("../maps/");
     tessel.inputScenario(map_file+".yaml", length, width);
     tessel.coverRectangles(); // computes the tesselation
+    tessel.generateObstacles(); // computes ellipses bounding obstacles
     //tessel.plotBestCover();
+    tessel.plotObstaclesContour();
 
     // 1.2 - Retrieve list of rectangles
     auto rects  = tessel.getRectangles();
-
+    auto obstacles = tessel.getObstacles();
 
     // 2 - Polygon Connectivity graph (working with pixel metric
     auto sCfree
@@ -38,12 +40,14 @@ int main(int argc, char** argv) {
                     length*tessel.MtoPx(),
                     width*tessel.MtoPx(),
                     tessel.PxtoM());
-    // 2.1 - Add rectangles computed in mrenv
+    // 2.1 - Add rectangles and obstacles computed in mrenv
     sCfree->addMrenvPolygons(rects);
+    sCfree->addObstacles(obstacles);
     // 2.2 - Create a graph expressing the connectivity between rectangles
     sCfree->createConnectivityGraph();
     sCfree->printMetaPolygons();
-    //sCfree->plotCfree();
+    sCfree->plotCfree();
+    sCfree->plotObstacles(map_file+".png");
 
 
     // 3 - Sample start and goal

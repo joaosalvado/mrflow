@@ -28,11 +28,25 @@
 namespace mrflow{
     namespace cfree
     {
-        typedef struct PoligonsInfo
+        struct PoligonsInfo
         {
             std::vector<int> maxNumRobots;
-            std::vector<mrflow::cfree::ConfigurationFreeSpace::Point> center;
-        } PoligonsInfo;
+            std::vector<ConfigurationFreeSpace::Point> center;
+        };
+
+        struct Obstacle{
+            // Ellipse
+            double major_axis, minor_axis;
+            ConfigurationFreeSpace::Point center;
+            ConfigurationFreeSpace::Polygon bb; //bounding box
+        };
+
+        struct OfreePiece {
+            mrflow::cfree::Geometry::Polygon convexhull;
+            std::vector<std::shared_ptr<Obstacle>> obstacles;
+        };
+
+
 
         class SimpleCfree : public MetaConfigurationFreeSpace
         {
@@ -59,6 +73,7 @@ namespace mrflow{
             }
 
             void plotCfree();
+            void plotObstacles(String file);
             void plotRectangles(PolygonSet &ps);
             void plotMultirobotPath(
                     std::vector<std::vector<int>> path,
@@ -72,9 +87,13 @@ namespace mrflow{
                 this->createMetaConnectivityMap_AdjacentPolygons();
                 this->computePolygonsInfo();
                 this->setPolygonTransitionCosts();
+                this->updateConnectivityGraphWithObstacles();
             }
+            void updateConnectivityGraphWithObstacles();
             void addMrenvPolygons(
                     std::list<std::shared_ptr<mrenv::Tesselation::Rectangle>> &rects);
+            void addObstacles(std::vector<std::vector<cv::Point> > obstacles);
+
             //void createSquareCoverage(std::string maps_path, std::string map_file, double scale);
             //void plotCoverage() { tessel.plotBestCover(); };
             void line_color(cv::Mat img, cv::Point start, cv::Point end, int r);
@@ -87,6 +106,12 @@ namespace mrflow{
         private:
             double px2m;
             cv::Mat img;
+
+            std::vector<std::shared_ptr<Obstacle>> obstacles;
+            std::unordered_map<
+                    std::pair<int,int>,
+                    std::shared_ptr<OfreePiece>,
+                    boost::hash<std::pair<int,int>> > ofreebit_map;
 
             std::vector<cv::Scalar> colors =
                     {
