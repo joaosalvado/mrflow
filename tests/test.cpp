@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
     tessel.coverRectangles(); // computes the tesselation
     tessel.generateObstacles(); // computes ellipses bounding obstacles
     //tessel.plotBestCover();
-    tessel.plotObstaclesContour();
+    //tessel.plotObstaclesContour();
 
     // 1.2 - Retrieve list of rectangles
     auto rects  = tessel.getRectangles();
@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
     sCfree->addObstacles(obstacles);
     // 2.2 - Create a graph expressing the connectivity between rectangles
     sCfree->createConnectivityGraph();
-    sCfree->printMetaPolygons();
+    // sCfree->printMetaPolygons();
     sCfree->plotCfree();
     sCfree->plotObstacles(map_file+".png");
 
@@ -63,11 +63,13 @@ int main(int argc, char** argv) {
     auto mrpath = mrplanner->dummyLabelledPath(solution);
     //sCfree->plotMultirobotPath(mrpath, map_file+".png");
 
-    for(int r = 0; r < R; ++r ) {
+/*    for(int r = 0; r < R; ++r ) {
         sCfree->loadMap(map_file + ".png");
         sCfree->plotPath(mrpath[r], r);
-    }
+    }*/
 
+    auto path_generator = std::make_shared<mrflow::planner::ProblemGenerator>(sCfree);
+    path_generator->createMrPath(mrpath);
     return 0;
 }
 

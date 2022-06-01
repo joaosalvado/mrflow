@@ -243,6 +243,39 @@ void MetaConfigurationFreeSpace::generateImprovedCfreeMap()
     // }
 }
 
+
+std::vector<std::vector<int>> MetaConfigurationFreeSpace::connectivity_graph_general(
+        std::vector<std::shared_ptr<Polygon>> polygons){
+    std::vector<std::vector<int>> connectivity_graph;
+    //Connectivity graph of the new created polygons
+    PolygonConnectivityGraph _connectivityMap;
+    //Connectivity algorithm
+    gtl::connectivity_extraction<int> _connectivityAlgorithm;
+
+    for (auto &poly : polygons)
+    {
+        _connectivityAlgorithm.insert(*poly);
+    }
+
+    std::vector<std::set<int>> graph(polygons.size());
+
+    //populate the graph with edge data -> less expensive computation, more difficult to work with
+    _connectivityAlgorithm.extract(graph);
+
+    connectivity_graph.resize(polygons.size());
+    //Change the structure of the graph to a vector of vectors
+    int polyId = 0;
+    for (std::set<int> adjacencyList : graph)
+    {
+        for (auto it = adjacencyList.begin(); it != adjacencyList.end(); ++it)
+        {
+            connectivity_graph[polyId].push_back(*it);
+        }
+        ++polyId;
+    }
+    return connectivity_graph;
+}
+
 std::vector<std::vector<int>> MetaConfigurationFreeSpace::connectivity_graph(PolygonSet polygons)
 {
     //Insert Polygons for connectivity algorithm
@@ -255,13 +288,13 @@ std::vector<std::vector<int>> MetaConfigurationFreeSpace::connectivity_graph(Pol
         _metaPolygonConnectivityAlgorithm.insert(gtl::view_as<gtl::polygon_90_concept>(poly));
     }
 
-    std::vector<std::set<int>> graph(this->_metaPolygons.size());
+    std::vector<std::set<int>> graph(polygons.size());
 
     //populate the graph with edge data -> less expensive computation, more difficult to work with
     _metaPolygonConnectivityAlgorithm.extract(graph);
 
     std::vector<std::vector<int>> connectivity_graph;
-    connectivity_graph.resize(this->_metaPolygons.size());
+    connectivity_graph.resize(polygons.size());
     //Change the structure of the graph to a vector of vectors
     int polyId = 0;
     for (std::set<int> adjacencyList : graph)

@@ -33,7 +33,6 @@ bool mrflow::planner::MrFlowPlanner::solve(
 
     solution = flow_solution;
 
-    this->getMrPath(solution); // TODO: handle way to return path
     return solved;
 }
 
@@ -144,9 +143,3 @@ void mrflow::planner::MrFlowPlanner::setup()
 }
 
 
-void mrflow::planner::MrFlowPlanner::getMrPath(std::vector<std::vector<int>> solution_){
-    // Sequence of polygons
-    auto robot_polygons_path = this->dummyLabelledPath(solution_);
-    this->path_generator_->createPath(robot_polygons_path[0]);
-
-}

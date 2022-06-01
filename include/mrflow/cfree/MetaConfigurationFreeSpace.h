@@ -224,6 +224,9 @@ namespace mrflow
                 }
             }
 
+            std::vector<std::vector<int>> connectivity_graph(PolygonSet polygons);
+            std::vector<std::vector<int>> connectivity_graph_general(
+                    std::vector<std::shared_ptr<Polygon>> polygons);
         protected:
             //Set of meta Polygons
             PolygonSet _metaPolygonsOriginal;
@@ -251,10 +254,6 @@ namespace mrflow
             //Number of Polygons
             std::size_t _numberMetaPolygons;
 
-            /**
-             * Creates topological graph of the cfree with respect to the meta polygons
-             */
-            std::vector<std::vector<int>> connectivity_graph(PolygonSet polygons);
 
             /**
              * Polygons provided in the file are overlapping

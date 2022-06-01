@@ -343,19 +343,27 @@ void cfree::SimpleCfree::line_color(cv::Mat img, cv::Point start, cv::Point end,
 }
 
 void cfree::SimpleCfree::fillPolygon(Mat img, const cv::Point *points, int n_pts) {
-    fillPoly(img,
+
+   /*double alpha = 0.8;
+    Mat layer = cv::Mat::zeros(img.size(), CV_8UC3);
+
+    fillPoly(layer,
              &points,
              &n_pts,
              1,
              Scalar(50, 100, 50),
              LINE_8);
 
+    cv::addWeighted(img, alpha, layer, 1-alpha, 0, img);*/
+
+
     polylines(img,
               &points,
               &n_pts,
               1,
               true,
-              Scalar(240, 50, 200));
+              Scalar(70, 100, 70),
+              LINE_8);
 }
 
 
@@ -406,7 +414,9 @@ void cfree::SimpleCfree::addObstacles(std::vector<std::vector<cv::Point> > obsta
     for(auto obstacle_noncovex : obstacles_nonconvex){
         auto obstacles_convex = split(obstacle_noncovex);
         for(auto obstacle_convex : obstacles_convex){
+            // Rectangle is the actual obstacle
             auto rectangle = gtl::view_as<gtl::rectangle_concept>(obstacle_convex);
+            // Compute ellipse approx
             auto dx_ = boost::polygon::horizontal(rectangle);
             auto dx = dx_.high()-dx_.low();
             auto dy_ = boost::polygon::vertical(rectangle);
@@ -415,9 +425,22 @@ void cfree::SimpleCfree::addObstacles(std::vector<std::vector<cv::Point> > obsta
             double major_axis = dx/ sqrt(2);
             double minor_axis = dy/ sqrt(2);
 
-            if(dx == 1 || dy ==1) continue;
-
-            this->obstacles.push_back(std::make_shared<mrflow::cfree::Obstacle>(Obstacle{major_axis,minor_axis,center,obstacle_convex}));
+            if(dx == 1 || dy ==1) continue; // TODO: odd ellipses
+            // Creating outter bounding box
+            Geometry::Point lb = this->createPoint(center.x() - major_axis,
+                                                   center.y() - minor_axis);
+            Geometry::Point lu = this->createPoint( center.x() - major_axis,
+                                                    center.y() + minor_axis);
+            Geometry::Point ru = this->createPoint(center.x() + major_axis,
+                                                   center.y() + minor_axis);
+            Geometry::Point rb = this->createPoint(center.x() + major_axis,
+                                                   center.y() - minor_axis);
+            Geometry::Polygon bb_out = this->createPolygon(std::list<Geometry::Point>({lb, lu, ru, rb, lb}));
+            // Create obstacle
+            this->obstacles.push_back(std::make_shared<mrflow::cfree::Obstacle>(
+                    Obstacle{major_axis,minor_axis,center,
+                             std::make_shared<Geometry::Polygon>(obstacle_convex),
+                             std::make_shared<Geometry::Polygon>(bb_out)}));
         }
     }
 
@@ -430,7 +453,8 @@ void cfree::SimpleCfree::plotObstacles(String file){
 
     cv::Mat test_img = getNewImage(file); // TODO: remove me
     for( auto obstacle : obstacles){
-        addFillPolygon(test_img, obstacle->bb);
+        //addFillPolygon(test_img, obstacle->bb_i);
+        addFillPolygon(test_img, *obstacle->bb_o);
         cv::ellipse(test_img,{obstacle->center.x(), obstacle->center.y()},
                 {(int)obstacle->major_axis, (int)obstacle->minor_axis},
                 0,0,360,Scalar(50,50,50),4);
@@ -439,6 +463,17 @@ void cfree::SimpleCfree::plotObstacles(String file){
     cv::waitKey();
 }
 
+
+std::vector<std::shared_ptr<cfree::Geometry::Polygon>>
+cfree::SimpleCfree::getObstaclesBBo(){
+    std::vector<std::shared_ptr<cfree::Geometry::Polygon>> output;
+    for(auto obstacle : this->obstacles){
+        output.push_back(obstacle->bb_o);
+    }
+    return output;
+}
+
+/*
 void cfree::SimpleCfree::updateConnectivityGraphWithObstacles(){
     auto P = this->_metaConnectivityMap.size(); // amount of polygons
     // Generate ellipse obstacles boundind boxes
@@ -471,3 +506,4 @@ void cfree::SimpleCfree::updateConnectivityGraphWithObstacles(){
          }
     }
 }
+*/
