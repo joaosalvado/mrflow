@@ -46,11 +46,8 @@ int main(int argc, char** argv) {
     // 2.2 - Create a graph expressing the connectivity between rectangles
     sCfree->createConnectivityGraph();
     // sCfree->printMetaPolygons();
-    sCfree->plotCfree();
+    sCfree->plotCfree("cfree");
     //sCfree->plotObstacles(map_file+".png");
-
-    sCfree->updateConnectivityGraphWithObstacles();
-    sCfree->plotCfree();
 
 
     // 3 - Sample start and goal
@@ -66,10 +63,10 @@ int main(int argc, char** argv) {
     auto mrpath = mrplanner->dummyLabelledPath(solution);
     //sCfree->plotMultirobotPath(mrpath, map_file+".png");
 
-/*    for(int r = 0; r < R; ++r ) {
+    for(int r = 0; r < R; ++r ) {
         sCfree->loadMap(map_file + ".png");
         sCfree->plotPath(mrpath[r], r);
-    }*/
+    }
 
     auto path_generator = std::make_shared<mrflow::planner::ProblemGenerator>(sCfree);
     path_generator->createMrPath(mrpath);

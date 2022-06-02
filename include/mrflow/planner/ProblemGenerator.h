@@ -23,6 +23,10 @@ namespace mrflow::planner {
         std::shared_ptr<mrflow::cfree::OfreeBit> createOfreeBit(const
                 std::vector<mrflow::cfree::Geometry::Polygon> &polygons);
 
+        std::vector<mrflow::cfree::Geometry::Point> createCenterline(
+                const std::vector<int> robot_polygons);
+
+
     public:
         ProblemGenerator(std::shared_ptr<mrflow::cfree::SimpleCfree> &simpleCfree_) {
             this->simpleCfree = simpleCfree_;

@@ -545,7 +545,11 @@ bool MetaConfigurationFreeSpace::arePolygonsConnected(const Polygon &pol1, const
     auto dy_interval = boost::polygon::vertical(rect);
     auto dy = dy_interval.high() - dy_interval.low();
     auto door_length = (dx > dy ? dx : dy);
-    if(door_length < margin*this->footprint_->getLength()  ) return false;
+    if(door_length < margin*this->footprint_->getLength()  ) {
+
+        return false;
+
+    }
     return true;
 /*    auto line = this->intersectingLineSegment(pol1, pol2);
     if (line.size() == 0) //No intersection at all

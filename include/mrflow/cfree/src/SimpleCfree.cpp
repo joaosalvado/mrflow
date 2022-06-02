@@ -49,7 +49,7 @@ void cfree::SimpleCfree::setPolygonTransitionCosts() {
 }
 
 
-void cfree::SimpleCfree::plotCfree() {
+void cfree::SimpleCfree::plotCfree(String title) {
     double f = mm_px; //0.01;
     int cfree_xmax = this->getCfreeMaxX() * 1.05 * f;
     int cfree_ymax = this->getCfreeMaxY() * 1.05 * f;
@@ -96,7 +96,7 @@ void cfree::SimpleCfree::plotCfree() {
                     {(int) obstacle->major_axis, (int) obstacle->minor_axis},
                     0, 0, 360, Scalar(50, 50, 50), 4);
     }
-    cv::imshow("Cfree", img);
+    cv::imshow(title, img);
     cv::waitKey();
 }
 
@@ -485,15 +485,23 @@ void cfree::SimpleCfree::updateConnectivityGraphWithObstacles() {
             // Remove it
             //this->_metaPolygons.erase(this->_metaPolygons.begin()+p_id);
             this->_metaConnectivityMap[p_id].clear();
+            for(int p_other = 0; p_other < P; ++p_other){
+                this->eraseConnection(p_other,p_id);
+            }
         }
         // After removing bb, check if the doors are still traversable
         for(auto p_other : this->_metaConnectivityMap[p_id]){
             if(p_other == p_id) continue;
             // Check if robot can traverse between polygons after removing obstacles
-            if(!arePolygonsConnected(pol_no_obstacles, this->getMetaPolygon(p_other))){
+            if(!arePolygonsNoObstaclesConnected(this->getMetaPolygon(p_id),pol_no_obstacles, this->getMetaPolygon(p_other))){
                 this->eraseConnection(p_id,p_other);
                 //std::remove(this->_metaConnectivityMap[p_id].begin(), this->_metaConnectivityMap[p_id].end(),p_other);
                 //std::remove(this->_metaConnectivityMap[p_other].begin(), this->_metaConnectivityMap[p_other].end(),p_id);
+                 cv::Mat test_img = getNewImage("map-partial-3.png"); // TODO: remove me
+                 addFillPolygon(test_img, pol_no_obstacles);
+                 addFillPolygon(test_img, this->getMetaPolygon(p_other));
+                 cv::imshow("test", test_img);
+                 cv::waitKey();
             }
         }
     }
@@ -513,47 +521,62 @@ bool cfree::SimpleCfree::robotFitsPolygon(
     auto connected_to_polygon = connectivity_graph[connectivity_graph.size()-1];
 
    // cv::Mat test_img = getNewImage("map-partial-3.png"); // TODO: remove me
-
     polygon_no_obstacles = polygon;
     for(auto o_id : connected_to_polygon){
         polygon_no_obstacles = polygonMinus(polygon_no_obstacles, *this->obstacles[o_id]->bb_o).front();
         //addFillPolygon(test_img, *this->obstacles[o_id]->bb_o);
     }
- /*   addFillPolygon(test_img, polygon_no_obstacles);
+/*    addFillPolygon(test_img, polygon_no_obstacles);
     cv::imshow("test", test_img);
-    cv::waitKey();
-*/
+    cv::waitKey();*/
+
     auto area = this->area(polygon_no_obstacles);
     auto L =  margin*footprint_->getLength();
+    auto min_area = 4*margin*L*L;
     if( area < 4*margin*L*L ) return false;
     return true;
 }
 
 
+bool cfree::SimpleCfree::arePolygonsNoObstaclesConnected(
+        const Polygon &pol_original,
+        const Polygon &pol_no_obstacles,
+        const Polygon &pol_connected){
+    PolygonSet p_o{pol_original}, p_c{pol_connected}, p_no{pol_original};
+    // Intersection pol_original and pol_connected
+    PolygonSet p_o_c;
+    assign(p_o_c, p_o & p_c);
+    // Intersection pol_no_obstacles and pol_connected
+    PolygonSet p_no_c;
+    assign(p_no_c, p_no & p_c);
+    // Intersection minus
+    auto obstacle_piece = polygonMinus(p_o_c.front(), p_no_c.front());
 
+    // Compute original door length
+    auto p_o_c_rect = gtl::view_as<gtl::rectangle_concept>(p_o_c.front());
+    auto dx_interval = boost::polygon::horizontal(p_o_c_rect);
+    auto dx = dx_interval.high() - dx_interval.low();
+    auto dy_interval = boost::polygon::vertical(p_o_c_rect);
+    auto dy = dy_interval.high() - dy_interval.low();
+    auto orginal_door_length = (dx > dy ? dx : dy);
 
+    int door_length;
+    if(obstacle_piece.empty()){ // obstcacle does not overlap the door
+        door_length = orginal_door_length;
+    } else{ // re compute the  door without obstacle
+        // Compute obstacle door length
+        auto obs_rect = gtl::view_as<gtl::rectangle_concept>(obstacle_piece.front());
+        auto dx_interval = boost::polygon::horizontal(obs_rect);
+        auto dx = dx_interval.high() - dx_interval.low();
+        auto dy_interval = boost::polygon::vertical(obs_rect);
+        auto dy = dy_interval.high() - dy_interval.low();
+        auto obs_door_length = (dx > dy ? dx : dy);
 
+        door_length = orginal_door_length - obs_door_length;
+    }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    if(door_length < margin*this->footprint_->getLength()  ) {
+        return false;
+    }
+    return true;
+}

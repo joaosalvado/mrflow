@@ -73,7 +73,7 @@ namespace mrflow{
                 return this->_metaConnectivityMap;
             }
 
-            void plotCfree();
+            void plotCfree(String title);
             void plotObstacles(String file);
             void plotRectangles(PolygonSet &ps);
             void plotMultirobotPath(
@@ -88,7 +88,7 @@ namespace mrflow{
                 this->createMetaConnectivityMap_AdjacentPolygons();
                 this->computePolygonsInfo();
                 this->setPolygonTransitionCosts();
-                // this->updateConnectivityGraphWithObstacles();
+                this->updateConnectivityGraphWithObstacles();
             }
             void updateConnectivityGraphWithObstacles();
             void addMrenvPolygons(
@@ -104,6 +104,10 @@ namespace mrflow{
             void addFilledCircle(cv::Mat img, cv::Point center, int r, int radius);
             void fillPolygon(Mat img, const cv::Point *points, int n_pts);
             void addFillPolygon(Mat img, Polygon pol);
+            bool arePolygonsNoObstaclesConnected(
+                    const Polygon &pol_original,
+                    const Polygon &pol_no_obstacles,
+                    const Polygon &pol_connected);
             cv::Mat getNewImage(String file );
         private:
             cv::Mat img;
