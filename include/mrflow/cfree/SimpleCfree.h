@@ -88,9 +88,9 @@ namespace mrflow{
                 this->createMetaConnectivityMap_AdjacentPolygons();
                 this->computePolygonsInfo();
                 this->setPolygonTransitionCosts();
-               // this->updateConnectivityGraphWithObstacles();
+                // this->updateConnectivityGraphWithObstacles();
             }
-           // void updateConnectivityGraphWithObstacles();
+            void updateConnectivityGraphWithObstacles();
             void addMrenvPolygons(
                     std::list<std::shared_ptr<mrenv::Tesselation::Rectangle>> &rects);
             void addObstacles(std::vector<std::vector<cv::Point> > obstacles);
@@ -106,7 +106,6 @@ namespace mrflow{
             void addFillPolygon(Mat img, Polygon pol);
             cv::Mat getNewImage(String file );
         private:
-            double px2m;
             cv::Mat img;
 
 
@@ -126,6 +125,10 @@ namespace mrflow{
                     };
             //mrenv::Tesselation tessel;
             //void convexPolygon(cv::Mat img, const cv::Point *points, int n_pts);
+
+            bool robotFitsPolygon(
+                    const std::vector<std::shared_ptr<Polygon>> &obstacles,
+                    Polygon polygon, Polygon &polygon_no_obstacles );
 
         };
     } // namespace cfree

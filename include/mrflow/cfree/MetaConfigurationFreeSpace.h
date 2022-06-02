@@ -228,6 +228,7 @@ namespace mrflow
             std::vector<std::vector<int>> connectivity_graph_general(
                     std::vector<std::shared_ptr<Polygon>> polygons);
         protected:
+            double px2m;
             //Set of meta Polygons
             PolygonSet _metaPolygonsOriginal;
             //Intersections;
@@ -254,7 +255,7 @@ namespace mrflow
             //Number of Polygons
             std::size_t _numberMetaPolygons;
 
-
+            double margin = 1.75;
             /**
              * Polygons provided in the file are overlapping
              */

@@ -538,8 +538,16 @@ bool MetaConfigurationFreeSpace::arePolygonsConnected(const Polygon &pol1, const
     PolygonSet ps3;
     assign(ps3, p1 & p2);
     //Since polygons will not have inner rings / holes and are convex then the intersection is always ONE polygon
-
-    auto line = this->intersectingLineSegment(pol1, pol2);
+    if(ps3.empty()) return false;
+    auto rect = gtl::view_as<gtl::rectangle_concept>(ps3.front());
+    auto dx_interval = boost::polygon::horizontal(rect);
+    auto dx = dx_interval.high() - dx_interval.low();
+    auto dy_interval = boost::polygon::vertical(rect);
+    auto dy = dy_interval.high() - dy_interval.low();
+    auto door_length = (dx > dy ? dx : dy);
+    if(door_length < margin*this->footprint_->getLength()  ) return false;
+    return true;
+/*    auto line = this->intersectingLineSegment(pol1, pol2);
     if (line.size() == 0) //No intersection at all
     {
         std::cout << 0;
@@ -562,7 +570,7 @@ bool MetaConfigurationFreeSpace::arePolygonsConnected(const Polygon &pol1, const
                 (x2 - x1) * (x2 - x1) +
                 (y2 - y1) * (y2 - y1));
         std::cout << distance;
-        if (distance > 1.1 * this->footprint_->getLength())
+        if (distance > 1.5 * this->footprint_->getLength())
         {
             return true;
         }
@@ -573,7 +581,7 @@ bool MetaConfigurationFreeSpace::arePolygonsConnected(const Polygon &pol1, const
     }
     std::cerr << "[MetaCfree] More than 2 points, bad polygons" << std::endl;
     auto area_ps3 = gtl::area(ps3.front());
-    return true;
+    return true;*/
 }
 
 void MetaConfigurationFreeSpace::modifyConnectivityConnected()

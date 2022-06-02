@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
     tessel.setMapsPath("../maps/");
     tessel.inputScenario(map_file+".yaml", length, width);
     tessel.coverRectangles(); // computes the tesselation
-    tessel.generateObstacles(); // computes ellipses bounding obstacles
+    tessel.generateObstacles(); // computes bounding polygons of obstacles
     //tessel.plotBestCover();
     //tessel.plotObstaclesContour();
 
@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
     auto rects  = tessel.getRectangles();
     auto obstacles = tessel.getObstacles();
 
-    // 2 - Polygon Connectivity graph (working with pixel metric
+    // 2 - Polygon Connectivity graph (working with pixel metric)
     auto sCfree
         = std::make_shared<mrflow::cfree::SimpleCfree>(
                     length*tessel.MtoPx(),
@@ -47,7 +47,10 @@ int main(int argc, char** argv) {
     sCfree->createConnectivityGraph();
     // sCfree->printMetaPolygons();
     sCfree->plotCfree();
-    sCfree->plotObstacles(map_file+".png");
+    //sCfree->plotObstacles(map_file+".png");
+
+    sCfree->updateConnectivityGraphWithObstacles();
+    sCfree->plotCfree();
 
 
     // 3 - Sample start and goal
