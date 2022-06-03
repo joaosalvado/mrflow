@@ -143,3 +143,11 @@ void mrflow::planner::MrFlowPlanner::setup()
 }
 
 
+bool mrflow::planner::MrFlowPlanner::solve_concatpath(
+        std::vector<int> &start,
+        std::vector<int> &goal,
+        std::vector<std::vector<int>> &solution){
+    this->solve(start, goal, solution);
+    solution = this->dummyLabelledPath(solution);
+    return true;
+}

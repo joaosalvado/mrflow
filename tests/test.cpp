@@ -7,8 +7,9 @@
 #include "mrflow/planner/MrFlowPlanner.h"
 #include <random>
 
-bool random_mrstate(std::vector<int> &state, int P, int R,
-                    const std::vector<int> &maxNumRobots);
+bool random_mrstate(
+        std::vector<int> &state, int R,
+        const std::shared_ptr<mrflow::cfree::SimpleCfree> cfree);
 
 int main(int argc, char** argv) {
 
@@ -16,10 +17,10 @@ int main(int argc, char** argv) {
     int R = 10;
     double m2mm = 1000.0;
     // 0.1 - Footprint
-    int length = 1; // meters
-    int width = 1;    // meters
+    double length = 0.5; // meters
+    double width = 0.5;    // meters
     // 0.2 - Map files that is in the maps/ folder
-    std::string map_file = "map-partial-3";
+    std::string map_file = "map-partial-2";
 
     // 1.1 - Compute a rectangular tesselation of grayscale map
     mrenv::Tesselation tessel;
@@ -27,10 +28,10 @@ int main(int argc, char** argv) {
     tessel.inputScenario(map_file+".yaml", length, width);
     tessel.coverRectangles(); // computes the tesselation
     tessel.generateObstacles(); // computes bounding polygons of obstacles
-    //tessel.plotBestCover();
-    //tessel.plotObstaclesContour();
+     tessel.plotBestCover();
+     tessel.plotObstaclesContour();
 
-    // 1.2 - Retrieve list of rectangles
+    // 1.2 - Retrieve list of rectangles and obstacles
     auto rects  = tessel.getRectangles();
     auto obstacles = tessel.getObstacles();
 
@@ -46,35 +47,41 @@ int main(int argc, char** argv) {
     // 2.2 - Create a graph expressing the connectivity between rectangles
     sCfree->createConnectivityGraph();
     // sCfree->printMetaPolygons();
+    sCfree->plotObstacles(map_file+".png");
     sCfree->plotCfree("cfree");
-    //sCfree->plotObstacles(map_file+".png");
 
 
     // 3 - Sample start and goal
     std::vector<int> start, goal;
-    random_mrstate(start, sCfree->getNumberOfMetaPolygons(), R,  sCfree->polygon_info_.maxNumRobots);
-    random_mrstate(goal, sCfree->getNumberOfMetaPolygons(), R, sCfree->polygon_info_.maxNumRobots);
+    random_mrstate(start, R,  sCfree);
+    random_mrstate(goal, R, sCfree);
     // 4 - Multi-robot planner
     auto mrplanner = std::make_shared<mrflow::planner::MrFlowPlanner>(R,sCfree);
-    std::vector<std::vector<int>> solution;
-    mrplanner->solve(start,goal, solution);
+    std::vector<std::vector<int>> mrpath;
+    mrplanner->solve_concatpath(start,goal, mrpath);
 
-    // 5 - Label the robot path
-    auto mrpath = mrplanner->dummyLabelledPath(solution);
-    //sCfree->plotMultirobotPath(mrpath, map_file+".png");
+    sCfree->plotMultirobotPath(mrpath, map_file+".png");
 
-    for(int r = 0; r < R; ++r ) {
-        sCfree->loadMap(map_file + ".png");
-        sCfree->plotPath(mrpath[r], r);
-    }
 
     auto path_generator = std::make_shared<mrflow::planner::ProblemGenerator>(sCfree);
-    path_generator->createMrPath(mrpath);
+    auto mrpath_optim = path_generator->createMrPath(mrpath);
+
+    int r = 0;
+    for(auto robot_path : mrpath_optim){
+        sCfree->loadMap(map_file + ".png");
+        sCfree->plotPath(robot_path->ofreebit, robot_path->centerline, r++);
+    }
+
     return 0;
 }
 
 
-bool random_mrstate(std::vector<int> &state, int P, int R, const std::vector<int> &maxNumberRobots){
+bool random_mrstate(
+        std::vector<int> &state, int R,
+        const std::shared_ptr<mrflow::cfree::SimpleCfree> cfree){
+    int P = cfree->getNumberOfMetaPolygons();
+    const auto maxNumberRobots = cfree->polygon_info_.maxNumRobots;
+
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
     std::uniform_int_distribution<> distr(0, P-1); // define the range
@@ -82,6 +89,7 @@ bool random_mrstate(std::vector<int> &state, int P, int R, const std::vector<int
     while(R>0){
         // sample polygon
         int p_id = distr(gen);
+        if(cfree->isPolygonDisconnected(p_id)) continue;
         // add if possible
         if(state[p_id]+1 <= maxNumberRobots[p_id]){
             state[p_id]++;

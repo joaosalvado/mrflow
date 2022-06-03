@@ -26,6 +26,10 @@ namespace mrflow::planner{
                     std::vector<int> &start,
                     std::vector<int> &goal,
                     std::vector<std::vector<int>> &solution);
+            bool solve_concatpath(
+                    std::vector<int> &start,
+                    std::vector<int> &goal,
+                    std::vector<std::vector<int>> &solution);
 
             /**
              * @brief Generate the Dynamic network for the given environment (Cfree)

@@ -10,7 +10,7 @@ void cfree::SimpleCfree::computePolygonsInfo() {
         //Initialize Poligon Info
         Polygon polygon = this->getMetaPolygon(p_id);
         auto center_px = this->center(polygon);
-        auto center_m = createPoint(center_px.x() * px2m, center_px.y() * px2m);
+        auto center_m = createPoint(center_px.x() , center_px.y() );
         this->polygon_info_.center.push_back(center_m);
         this->polygon_info_.maxNumRobots.push_back(this->maxNumberOfRobotsInPolygon(polygon));
     }
@@ -29,9 +29,9 @@ void cfree::SimpleCfree::setPolygonTransitionCosts() {
                 auto p1_center_px = this->center(this->getMetaPolygon(p1));
                 auto p2_center_px = this->center(this->getMetaPolygon(p2));
                 auto door_center_px = this->getCenterDoor(p1, p2);
-                auto p1_center_m = createPoint(p1_center_px.x() * px2m, p1_center_px.y() * px2m);
-                auto p2_center_m = createPoint(p2_center_px.x() * px2m, p2_center_px.y() * px2m);
-                auto door_center_m = createPoint(door_center_px.x() * px2m, door_center_px.y() * px2m);
+                auto p1_center_m = createPoint(p1_center_px.x() , p1_center_px.y() );
+                auto p2_center_m = createPoint(p2_center_px.x() , p2_center_px.y() );
+                auto door_center_m = createPoint(door_center_px.x() , door_center_px.y() );
 
                 double euclidean_distance_Pin_Dcenter =
                         std::sqrt(std::pow(p1_center_m.x() - door_center_m.x(), 2) +
@@ -55,8 +55,6 @@ void cfree::SimpleCfree::plotCfree(String title) {
     int cfree_ymax = this->getCfreeMaxY() * 1.05 * f;
     int cfree_xmin = this->getCfreeMinX() * f;
     int cfree_ymin = this->getCfreeMinY() * f;
-
-
     cv::Mat img = cv::Mat::zeros(cfree_ymax - cfree_ymin + 1, cfree_xmax - cfree_xmin + 1, CV_8UC3);
 
     //Plotting polygons with their respective number
@@ -523,7 +521,11 @@ bool cfree::SimpleCfree::robotFitsPolygon(
    // cv::Mat test_img = getNewImage("map-partial-3.png"); // TODO: remove me
     polygon_no_obstacles = polygon;
     for(auto o_id : connected_to_polygon){
-        polygon_no_obstacles = polygonMinus(polygon_no_obstacles, *this->obstacles[o_id]->bb_o).front();
+
+        auto result_set = polygonMinus(polygon_no_obstacles, *this->obstacles[o_id]->bb_o);
+        if(!result_set.empty()){
+            polygon_no_obstacles = result_set.front();
+        }
         //addFillPolygon(test_img, *this->obstacles[o_id]->bb_o);
     }
 /*    addFillPolygon(test_img, polygon_no_obstacles);
@@ -579,4 +581,34 @@ bool cfree::SimpleCfree::arePolygonsNoObstaclesConnected(
         return false;
     }
     return true;
+}
+
+void cfree::SimpleCfree::plotPath(
+        std::shared_ptr<OfreeBit> ofreebit,
+        std::vector<Point> centerline,  int r){
+    int cfree_xmax = this->getCfreeMaxX() * 1.05;
+    int cfree_ymax = this->getCfreeMaxY() * 1.05;
+    int cfree_xmin = this->getCfreeMinX();
+    int cfree_ymin = this->getCfreeMinY();
+    // cv::Mat img_path = cv::Mat::zeros(cfree_ymax - cfree_ymin + 1, cfree_xmax - cfree_xmin + 1, CV_8UC3);
+    // Plot convex hull
+    const auto &convexhull = ofreebit->convexhull;
+    addFillPolygon(img, convexhull);
+    // Plot obstacles as ellipses
+    for (auto obstacle: ofreebit->obstacles) {
+        cv::ellipse(img, {obstacle->center.x(), obstacle->center.y()},
+                    {(int) obstacle->major_axis, (int) obstacle->minor_axis},
+                    0, 0, 360, Scalar(50, 200, 50), 4);
+    }
+    // Plot center line
+    for( int path_pt_id = 0; path_pt_id < centerline.size()-1; ++path_pt_id ){
+        const auto &point_prev = centerline[path_pt_id];
+        const auto &point_next = centerline[path_pt_id+1];
+        cv::Point2d point_prev_cv = cv::Point2d(point_prev.x(), point_prev.y());
+        cv::Point2d point_next_cv = cv::Point2d(point_next.x(), point_next.y());
+        this->line_color(img, point_prev_cv, point_next_cv, r);
+    }
+
+    cv::imshow("Path",img);
+    cv::waitKey();
 }

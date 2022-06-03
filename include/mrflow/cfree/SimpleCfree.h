@@ -80,6 +80,10 @@ namespace mrflow{
                     std::vector<std::vector<int>> path,
                     String file);
             void plotPath(std::vector<int> path, int robot_id);
+            void plotPath(
+                    std::shared_ptr<OfreeBit> ofreebit,
+                    std::vector<Point> centerline,
+                    int r);
             void loadMap(String file);
             PoligonsInfo polygon_info_;
             std::vector<std::vector<double>> transition_cost_matrix_;
@@ -95,6 +99,7 @@ namespace mrflow{
                     std::list<std::shared_ptr<mrenv::Tesselation::Rectangle>> &rects);
             void addObstacles(std::vector<std::vector<cv::Point> > obstacles);
             std::vector<std::shared_ptr<cfree::Geometry::Polygon>> getObstaclesBBo();
+            bool isPolygonDisconnected(int p_id){ return this->_metaConnectivityMap[p_id].empty();}
 
             //void createSquareCoverage(std::string maps_path, std::string map_file, double scale);
             //void plotCoverage() { tessel.plotBestCover(); };

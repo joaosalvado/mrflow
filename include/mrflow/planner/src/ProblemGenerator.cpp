@@ -51,6 +51,7 @@ ProblemGenerator::createOfreeBit(
     ofreebit->convexhull = convex_polygon;
 
     // Debugging
+/*
     cv::Mat test_img = this->simpleCfree->getNewImage("map-partial-3.png"); // TODO: remove me
     this->simpleCfree->addFillPolygon(test_img, ofreebit->convexhull);
     for(auto obstacle : ofreebit->obstacles) {
@@ -58,12 +59,14 @@ ProblemGenerator::createOfreeBit(
     }
     cv::imshow("test", test_img);
     cv::waitKey();
+*/
 
     return ofreebit;
 }
 
 
-void ProblemGenerator::createMrPath(
+std::vector<std::shared_ptr<RobotProblem>>
+ProblemGenerator::createMrPath(
         const std::vector<std::vector<int>> &mrpath){
     this->mrProblem_curr.clear(); // current multi-robot problem
     // Generate a problem per robot
@@ -71,6 +74,7 @@ void ProblemGenerator::createMrPath(
     for(const auto &robot_polygons : mrpath){
         this->mrProblem_curr.push_back( this->createRobotProblem(robot_polygons) );
     }
+    return this->mrProblem_curr;
 }
 
 std::vector<mrflow::cfree::Geometry::Point>
@@ -79,17 +83,23 @@ ProblemGenerator::createCenterline(
     std::vector<mrflow::cfree::Geometry::Point> path;
     int P = robot_polygons.size();
     // Center of first polygon
-    const auto &first_polygon = simpleCfree->getMetaPolygon(robot_polygons[0]);
-    path.push_back(simpleCfree->center(first_polygon));
+    const auto &first_pol_id = robot_polygons[0];
+    path.push_back(simpleCfree->polygon_info_.center[first_pol_id]);
 
-    for(int p_curr  = 1; p_curr < P; ++p_curr){
-        int p_prev = p_curr - 1;
+    for(int p_seq  = 1; p_seq < P; ++p_seq){
+        const auto &p_prev = robot_polygons[p_seq-1];
+        const auto &p_curr = robot_polygons[p_seq];
         // center p_curr
-        //simpleCfree->polygon_info_
-        const auto &pol_curr = simpleCfree->getMetaPolygon(p_curr);
-        // center p_prev
-        const auto &pol_prev = simpleCfree->getMetaPolygon(p_curr);
-
+        const auto &pol_curr_center = simpleCfree->polygon_info_.center[p_curr];
+        // door center
+        const auto &door_center = simpleCfree->getCenterDoor(p_prev
+                , p_curr);
+        // add to path
+        path.push_back(door_center);
+        path.push_back(pol_curr_center);
+    }
+    if(path.size() == 1){ // Stays in polygon
+        path.push_back(simpleCfree->polygon_info_.center[first_pol_id]);
     }
     return path;
 }

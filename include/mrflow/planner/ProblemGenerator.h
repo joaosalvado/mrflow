@@ -32,7 +32,8 @@ namespace mrflow::planner {
             this->simpleCfree = simpleCfree_;
         }
 
-        void createMrPath(const std::vector<std::vector<int>> &mrpath);
+        std::vector<std::shared_ptr<RobotProblem>> createMrPath(
+                const std::vector<std::vector<int>> &mrpath);
 
     };
 }
