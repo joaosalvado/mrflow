@@ -20,7 +20,7 @@
 
 #include "mrflow/cfree/MetaConfigurationFreeSpace.h"
 #include <iostream>
-
+#include <random>
 //Mrenv
 #include "mrenv/Tesselation.h"
 
@@ -108,7 +108,10 @@ namespace mrflow{
             void writeText(cv::Mat img, cv::Point poin, const char *message);
             void addFilledCircle(cv::Mat img, cv::Point center, int r, int radius);
             void fillPolygon(Mat img, const cv::Point *points, int n_pts);
+            void fillPolygon(Mat img, const cv::Point *points, int n_pts, int color_id);
             void addFillPolygon(Mat img, Polygon pol);
+            void addFillPolygon(Mat img, Polygon pol, int color_id);
+            void samplePolygon(int pol_id, double &x_meters, double &y_meters);
             bool arePolygonsNoObstaclesConnected(
                     const Polygon &pol_original,
                     const Polygon &pol_no_obstacles,

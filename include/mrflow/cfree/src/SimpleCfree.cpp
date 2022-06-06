@@ -114,6 +114,15 @@ void cfree::SimpleCfree::addFillPolygon(Mat img, Polygon pol) {
     fillPolygon(img, points, pol.coords_.size());
 }
 
+
+void cfree::SimpleCfree::addFillPolygon(Mat img, Polygon pol, int color_id){
+    cv::Point *points = new cv::Point[pol.coords_.size()];
+    for (auto point_id = 0; point_id < pol.coords_.size(); ++point_id) {
+        points[point_id] = cv::Point2d(pol.coords_[point_id].x(), pol.coords_[point_id].y());
+    }
+    fillPolygon(img, points, pol.coords_.size(), color_id);
+}
+
 void cfree::SimpleCfree::plotPath(std::vector<int> path, int r) {
     // Plot the configuration freespace
     int f = 1;
@@ -365,6 +374,18 @@ void cfree::SimpleCfree::fillPolygon(Mat img, const cv::Point *points, int n_pts
               LINE_4);
 }
 
+void cfree::SimpleCfree::fillPolygon(Mat img, const cv::Point *points, int n_pts, int color_id)  {
+    polylines(img,
+              &points,
+              &n_pts,
+              1,
+              true,
+              colors[color_id],
+              LINE_4);
+}
+
+
+
 
 void cfree::SimpleCfree::addMrenvPolygons(
         std::list<std::shared_ptr<mrenv::Tesselation::Rectangle>> &rects) {
@@ -518,20 +539,30 @@ bool cfree::SimpleCfree::robotFitsPolygon(
 
     auto connected_to_polygon = connectivity_graph[connectivity_graph.size()-1];
 
-   // cv::Mat test_img = getNewImage("map-partial-3.png"); // TODO: remove me
+    //cv::Mat test_img = getNewImage("map-corridors.png"); // TODO: remove me
     polygon_no_obstacles = polygon;
+    bool broken = false;
+   // addFillPolygon(test_img, polygon_no_obstacles, 3);
     for(auto o_id : connected_to_polygon){
 
         auto result_set = polygonMinus(polygon_no_obstacles, *this->obstacles[o_id]->bb_o);
         if(!result_set.empty()){
             polygon_no_obstacles = result_set.front();
         }
-        //addFillPolygon(test_img, *this->obstacles[o_id]->bb_o);
+
+        if(result_set.size() != 1) {
+            broken = true; // obstacle divided/crossed polygon
+        }
+/*        addFillPolygon(test_img, *this->obstacles[o_id]->bb_o, 1);
+        addFillPolygon(test_img, polygon_no_obstacles, 5);
+        cv::imshow("test", test_img);
+        cv::waitKey();*/
     }
-/*    addFillPolygon(test_img, polygon_no_obstacles);
+
+/*   addFillPolygon(test_img, polygon_no_obstacles, 2);
     cv::imshow("test", test_img);
     cv::waitKey();*/
-
+    if(broken) return false;
     auto area = this->area(polygon_no_obstacles);
     auto L =  margin*footprint_->getLength();
     auto min_area = 4*margin*L*L;
@@ -611,4 +642,28 @@ void cfree::SimpleCfree::plotPath(
 
     cv::imshow("Path",img);
     cv::waitKey();
+}
+
+// TODO: implementation ongoing
+void cfree::SimpleCfree::samplePolygon(int pol_id, double &x, double &y){
+    // get the polygon
+    auto polygon = this->getMetaPolygon(pol_id);
+    auto rectangle = gtl::view_as<gtl::rectangle_concept>(polygon);
+    // get center
+    auto center = this->polygon_info_.center[pol_id];
+    // get min side
+    auto dx_interval = gtl::horizontal(rectangle);
+    auto dx = dx_interval.high() - dx_interval.low();
+    auto dy_interval = gtl::vertical(rectangle);
+    auto dy = dy_interval.high() - dy_interval.low();
+    auto min_side = (dx < dy ? dx : dy);
+    // random device
+    std::random_device rd; // obtain a random number from hardware
+    std::mt19937 gen(rd()); // seed the generator
+    std::uniform_int_distribution<> distr(0, min_side - footprint_->getLength()); // define the range
+
+    //
+    auto radius = distr(gen);
+
+
 }
