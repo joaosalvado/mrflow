@@ -3,8 +3,8 @@
 //
 
 #include "mrflow/cfree/SimpleCfree.h"
-#include "mrenv/Tesselation.h"
 #include "mrflow/planner/MrFlowPlanner.h"
+#include "mrflow/tessel/TesselationAdapte.h"
 #include <random>
 
 bool random_mrstate(
@@ -23,16 +23,16 @@ int main(int argc, char** argv) {
     std::string map_file = "map-partial-3";
 
     // 1.1 - Compute a rectangular tesselation of grayscale map
-    mrenv::Tesselation tessel;
-    tessel.setMapsPath("../maps/");
+    mrflow::tessel::TesselationAdapte tessel;
+    tessel.mrenv->setMapsPath("../maps/");
     tessel.inputScenario(map_file+".yaml", length, width);
-    tessel.coverRectangles(); // computes the tesselation
+    tessel.coverPolygons(); // computes the tesselation
     tessel.generateObstacles(); // computes bounding polygons of obstacles
-    // tessel.plotBestCover();
-    // tessel.plotObstaclesContour();
+    tessel.plotBestCover();
+    tessel.plotObstaclesContour();
 
     // 1.2 - Retrieve list of rectangles and obstacles
-    auto rects  = tessel.getRectangles();
+    auto polygons  = tessel.getPolygons();
     auto obstacles = tessel.getObstacles();
 
     // 2 - Polygon Connectivity graph (working with pixel metric)
@@ -42,13 +42,13 @@ int main(int argc, char** argv) {
                     width*tessel.MtoPx(),
                     tessel.PxtoM());
     // 2.1 - Add rectangles and obstacles computed in mrenv
-    sCfree->addMrenvPolygons(rects);
+    sCfree->addMrenvPolygons(polygons);
     sCfree->addObstacles(obstacles);
     // 2.2 - Create a graph expressing the connectivity between rectangles
     sCfree->createConnectivityGraph();
-    // sCfree->printMetaPolygons();
-    // sCfree->plotObstacles(map_file+".png");
-    // sCfree->plotCfree("cfree");
+    sCfree->printMetaPolygons();
+    sCfree->plotObstacles(map_file+".png");
+    sCfree->plotCfree("cfree");
 
 
     // 3 - Sample start and goal

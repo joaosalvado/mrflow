@@ -12,6 +12,7 @@ namespace mrflow::planner {
     struct RobotProblem{
         std::shared_ptr<mrflow::cfree::OfreeBit> ofreebit;
         std::vector<mrflow::cfree::Geometry::Point> centerline;
+        double px2m;
     };
     class ProblemGenerator {
         std::vector<std::shared_ptr<RobotProblem>> mrProblem_curr;

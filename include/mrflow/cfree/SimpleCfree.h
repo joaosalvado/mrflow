@@ -37,7 +37,7 @@ namespace mrflow{
         struct Obstacle{
             // Ellipse
             double major_axis, minor_axis;
-            ConfigurationFreeSpace::Point center;
+            double xc , yc;
             std::shared_ptr<ConfigurationFreeSpace::Polygon> bb_i; //bounding box inside ellipse
             std::shared_ptr<ConfigurationFreeSpace::Polygon> bb_o; //bounding box outside ellise
         };
@@ -58,6 +58,7 @@ namespace mrflow{
             SimpleCfree(double length, double width, double px2m_)
                 : MetaConfigurationFreeSpace(){
                 this->px2m = px2m_;
+                this->m2px = 1/px2m_;
                 auto footprint = std::make_shared<VehicleFootprint>(
                         length, width);
                 this->addVehicleFootprint(footprint);
@@ -96,7 +97,7 @@ namespace mrflow{
             }
             void updateConnectivityGraphWithObstacles();
             void addMrenvPolygons(
-                    std::list<std::shared_ptr<mrenv::Tesselation::Rectangle>> &rects);
+                    std::vector<Geometry::Polygon> &polygons);
             void addObstacles(std::vector<std::vector<cv::Point> > obstacles);
             std::vector<std::shared_ptr<cfree::Geometry::Polygon>> getObstaclesBBo();
             bool isPolygonDisconnected(int p_id){ return this->_metaConnectivityMap[p_id].empty();}
@@ -112,11 +113,14 @@ namespace mrflow{
             void addFillPolygon(Mat img, Polygon pol);
             void addFillPolygon(Mat img, Polygon pol, int color_id);
             void samplePolygon(int pol_id, double &x_meters, double &y_meters);
+            std::vector<int> fromXYtoPolygons ( std::vector<std::vector<double>> mrstate);
             bool arePolygonsNoObstaclesConnected(
                     const Polygon &pol_original,
                     const Polygon &pol_no_obstacles,
                     const Polygon &pol_connected);
             cv::Mat getNewImage(String file );
+            double Px2m(){return this->px2m;}
+            double M2px(){return this->m2px;}
         private:
             cv::Mat img;
 

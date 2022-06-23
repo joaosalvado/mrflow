@@ -149,5 +149,6 @@ bool mrflow::planner::MrFlowPlanner::solve_concatpath(
         std::vector<std::vector<int>> &solution){
     this->solve(start, goal, solution);
     solution = this->dummyLabelledPath(solution);
+    //this->mrnet_->plot();
     return true;
 }

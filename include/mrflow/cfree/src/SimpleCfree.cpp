@@ -90,7 +90,7 @@ void cfree::SimpleCfree::plotCfree(String title) {
 
     // Plot the obstcles
     for (auto obstacle: obstacles) {
-        cv::ellipse(img, {obstacle->center.x(), obstacle->center.y()},
+        cv::ellipse(img, {(int)obstacle->xc, (int)obstacle->yc},
                     {(int) obstacle->major_axis, (int) obstacle->minor_axis},
                     0, 0, 360, Scalar(50, 50, 50), 4);
     }
@@ -388,17 +388,8 @@ void cfree::SimpleCfree::fillPolygon(Mat img, const cv::Point *points, int n_pts
 
 
 void cfree::SimpleCfree::addMrenvPolygons(
-        std::list<std::shared_ptr<mrenv::Tesselation::Rectangle>> &rects) {
-    for (auto &&rect: rects) {
-        Geometry::Point lb = this->createPoint(rect->left_bottom_corner.x - 2,
-                                               rect->left_bottom_corner.y - 2);
-        Geometry::Point lu = this->createPoint(rect->left_bottom_corner.x - 2,
-                                               rect->right_upper_corner.y + 2);
-        Geometry::Point ru = this->createPoint(rect->right_upper_corner.x + 2,
-                                               rect->right_upper_corner.y + 2);
-        Geometry::Point rb = this->createPoint(rect->right_upper_corner.x + 2,
-                                               rect->left_bottom_corner.y - 2);
-        Geometry::Polygon poly = this->createPolygon(std::list<Geometry::Point>({lb, lu, ru, rb, lb}));
+        std::vector<Geometry::Polygon> &polygons) {
+    for (auto &poly: polygons) {
         this->addPolygon(poly);
     }
 }
@@ -458,7 +449,7 @@ void cfree::SimpleCfree::addObstacles(std::vector<std::vector<cv::Point> > obsta
             Geometry::Polygon bb_out = this->createPolygon(std::list<Geometry::Point>({lb, lu, ru, rb, lb}));
             // Create obstacle
             this->obstacles.push_back(std::make_shared<mrflow::cfree::Obstacle>(
-                    Obstacle{major_axis, minor_axis, center,
+                    Obstacle{major_axis, minor_axis, (double)center.x(), (double)center.y(),
                              std::make_shared<Geometry::Polygon>(obstacle_convex),
                              std::make_shared<Geometry::Polygon>(bb_out)}));
         }
@@ -474,7 +465,7 @@ void cfree::SimpleCfree::plotObstacles(String file) {
     for (auto obstacle: obstacles) {
         //addFillPolygon(test_img, obstacle->bb_i);
         addFillPolygon(test_img, *obstacle->bb_o);
-        cv::ellipse(test_img, {obstacle->center.x(), obstacle->center.y()},
+        cv::ellipse(test_img, {(int)obstacle->xc, (int)obstacle->yc},
                     {(int) obstacle->major_axis, (int) obstacle->minor_axis},
                     0, 0, 360, Scalar(50, 50, 50), 4);
     }
@@ -615,7 +606,7 @@ bool cfree::SimpleCfree::arePolygonsNoObstaclesConnected(
 }
 
 void cfree::SimpleCfree::plotPath(
-        std::shared_ptr<OfreeBit> ofreebit,
+        std::shared_ptr<OfreeBit> ofreebit_meters,
         std::vector<Point> centerline,  int r){
     int cfree_xmax = this->getCfreeMaxX() * 1.05;
     int cfree_ymax = this->getCfreeMaxY() * 1.05;
@@ -623,12 +614,16 @@ void cfree::SimpleCfree::plotPath(
     int cfree_ymin = this->getCfreeMinY();
     // cv::Mat img_path = cv::Mat::zeros(cfree_ymax - cfree_ymin + 1, cfree_xmax - cfree_xmin + 1, CV_8UC3);
     // Plot convex hull
-    const auto &convexhull = ofreebit->convexhull;
+    const auto &convexhull = ofreebit_meters->convexhull;
     addFillPolygon(img, convexhull);
     // Plot obstacles as ellipses
-    for (auto obstacle: ofreebit->obstacles) {
-        cv::ellipse(img, {obstacle->center.x(), obstacle->center.y()},
-                    {(int) obstacle->major_axis, (int) obstacle->minor_axis},
+    for (auto obstacle: ofreebit_meters->obstacles) {
+        auto x = static_cast<int>(obstacle->xc);
+        auto y = static_cast<int>(obstacle->yc);
+        auto a = static_cast<int>(obstacle->major_axis);
+        auto b = static_cast<int>(obstacle->minor_axis);
+        cv::ellipse(img, {x, y},
+                    { a, b},
                     0, 0, 360, Scalar(50, 200, 50), 4);
     }
     // Plot center line
@@ -666,4 +661,23 @@ void cfree::SimpleCfree::samplePolygon(int pol_id, double &x, double &y){
     auto radius = distr(gen);
 
 
+}
+
+std::vector<int> cfree::SimpleCfree::fromXYtoPolygons(
+        std::vector<std::vector<double>> mrstate_meters){
+    int P = this->getNumberOfMetaPolygons();
+    int R = mrstate_meters.size();
+    auto polygons_state_return = std::vector<int>(P, 0);
+
+    for(int r = 0; r < R; ++r ){
+        const auto &x = mrstate_meters[r][0] * this->m2px;
+        const auto &y = mrstate_meters[r][1] * this->m2px;
+        for(int p = 0; p < P; ++p){
+            if(this->isInPolygon(p, x, y)){
+                polygons_state_return[p]++;
+                continue;
+            }
+        }
+    }
+    return polygons_state_return;
 }

@@ -10,12 +10,13 @@ using namespace mrflow::planner;
 std::shared_ptr<RobotProblem>
 ProblemGenerator::createRobotProblem(const std::vector<int> &robot_polygons){
     auto robot_problem = std::make_shared<RobotProblem>();
+    robot_problem->px2m = simpleCfree->Px2m();
     // Gather sequence of polygons along robot path
     mrflow::cfree::Geometry::PolygonSet polygons_sequence;
     for(const int &p_id : robot_polygons){
         polygons_sequence.push_back( simpleCfree->getMetaPolygon(p_id) );
     }
-    // Create a obstacle free space with obstacles from start to goal
+    // Create an obstacle free space with obstacles from start to goal
     robot_problem->ofreebit = createOfreeBit( polygons_sequence);
     // Create a straight line path going through the sequence of polygons centers and intersecitons
     robot_problem->centerline = createCenterline(robot_polygons);
@@ -46,7 +47,7 @@ ProblemGenerator::createOfreeBit(
     auto connected_to_convexhull = connectivity_graph[connectivity_graph.size()-1];
 
     for(auto o_id : connected_to_convexhull){
-        ofreebit->obstacles.push_back(simpleCfree->obstacles[o_id]);
+        ofreebit->obstacles.push_back(std::make_shared<cfree::Obstacle>(*simpleCfree->obstacles[o_id]));
     }
     ofreebit->convexhull = convex_polygon;
 
@@ -60,6 +61,17 @@ ProblemGenerator::createOfreeBit(
     cv::imshow("test", test_img);
     cv::waitKey();
 */
+    // Convert convex-hull form pixel to meter
+    for(auto &point : ofreebit->convexhull){
+
+    }
+    // Convert OfreeBit from pixel to meter
+    for(auto &obstacle : ofreebit->obstacles){
+        obstacle->xc = obstacle->xc;
+        obstacle->yc = obstacle->yc;
+        obstacle->minor_axis = obstacle->minor_axis;
+        obstacle->major_axis = obstacle->major_axis;
+    }
 
     return ofreebit;
 }

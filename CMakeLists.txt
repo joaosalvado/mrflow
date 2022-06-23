@@ -30,9 +30,8 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_SOURCE_DIR})
 
 # External libraries
-include_directories(${PROJECT_SOURCE_DIR}/ext/mrenv/include)
-message(${PROJECT_SOURCE_DIR}/ext/mrenv/include)
-add_subdirectory(${PROJECT_SOURCE_DIR}/ext/mrenv)
+include_directories(${project_source_dir}/ext/mr_env/include)
+add_subdirectory(${PROJECT_SOURCE_DIR}/ext/mr_env)
 
 # Mrflow library and executables
 add_subdirectory(${PROJECT_SOURCE_DIR}/include)

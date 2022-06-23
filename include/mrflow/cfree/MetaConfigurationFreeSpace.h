@@ -229,6 +229,7 @@ namespace mrflow
                     std::vector<std::shared_ptr<Polygon>> polygons);
         protected:
             double px2m;
+            double m2px;
             //Set of meta Polygons
             PolygonSet _metaPolygonsOriginal;
             //Intersections;
