@@ -1,8 +1,8 @@
 file(GLOB_RECURSE SOURCE_CODE *.cpp )
 file(GLOB_RECURSE HEADERS_CODE *.h )
-add_library(planner STATIC ${SOURCE_CODE} ${HEADERS_CODE})
+add_library(mrflow_lib STATIC ${SOURCE_CODE} ${HEADERS_CODE})
 
-target_link_libraries(planner cfree base)
+target_link_libraries(mrflow_lib cfree base mrenv)
 
-install(TARGETS planner  DESTINATION lib)
+install(TARGETS mrflow_lib  DESTINATION lib)
 install(FILES ${HEADERS} DESTINATION mrflow/)
