@@ -19,13 +19,18 @@ namespace mrflow::planner {
         std::shared_ptr<mrflow::cfree::SimpleCfree> simpleCfree;
         std::vector<std::vector<int>> polygons_sequence;
 
-        std::shared_ptr<RobotProblem> createRobotProblem(const std::vector<int> &robot_polygons);
+        std::shared_ptr<RobotProblem> createRobotProblem(
+                const std::vector<double> &start,
+                const std::vector<double> &goal,
+                const std::vector<int> &robot_polygons);
 
         std::shared_ptr<mrflow::cfree::OfreeBit> createOfreeBit(const
                 std::vector<mrflow::cfree::Geometry::Polygon> &polygons);
 
         std::vector<mrflow::cfree::Geometry::Point> createCenterline(
-                const std::vector<int> robot_polygons);
+                const std::vector<double> &start,
+                const std::vector<double> &goal,
+                const std::vector<int> &robot_polygons);
 
 
     public:
@@ -34,6 +39,8 @@ namespace mrflow::planner {
         }
 
         std::vector<std::shared_ptr<RobotProblem>> createMrPath(
+                const std::vector<double> &start,
+                const std::vector<double> &goal,
                 const std::vector<std::vector<int>> &mrpath);
 
     };

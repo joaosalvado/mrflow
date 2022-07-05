@@ -8,7 +8,10 @@
 using namespace mrflow::planner;
 
 std::shared_ptr<RobotProblem>
-ProblemGenerator::createRobotProblem(const std::vector<int> &robot_polygons){
+ProblemGenerator::createRobotProblem(
+        const std::vector<double> &start,
+        const std::vector<double> &goal,
+        const std::vector<int> &robot_polygons){
     auto robot_problem = std::make_shared<RobotProblem>();
     robot_problem->px2m = simpleCfree->Px2m();
     // Gather sequence of polygons along robot path
@@ -19,7 +22,7 @@ ProblemGenerator::createRobotProblem(const std::vector<int> &robot_polygons){
     // Create an obstacle free space with obstacles from start to goal
     robot_problem->ofreebit = createOfreeBit( polygons_sequence);
     // Create a straight line path going through the sequence of polygons centers and intersecitons
-    robot_problem->centerline = createCenterline(robot_polygons);
+    robot_problem->centerline = createCenterline(start, goal, robot_polygons);
 
     return robot_problem;
 }
@@ -79,24 +82,36 @@ ProblemGenerator::createOfreeBit(
 
 std::vector<std::shared_ptr<RobotProblem>>
 ProblemGenerator::createMrPath(
+        const std::vector<double> &start,
+        const std::vector<double> &goal,
         const std::vector<std::vector<int>> &mrpath){
     this->mrProblem_curr.clear(); // current multi-robot problem
     // Generate a problem per robot
     // Problem is composed of convex hull and obstacles (ofree) and a reference path
     for(const auto &robot_polygons : mrpath){
-        this->mrProblem_curr.push_back( this->createRobotProblem(robot_polygons) );
+        this->mrProblem_curr.push_back(
+                this->createRobotProblem(
+                        start,
+                        goal,
+                        robot_polygons) );
     }
     return this->mrProblem_curr;
 }
 
 std::vector<mrflow::cfree::Geometry::Point>
 ProblemGenerator::createCenterline(
-        const std::vector<int> robot_polygons){
+        const std::vector<double> &start,
+        const std::vector<double> &goal,
+        const std::vector<int> &robot_polygons){
     std::vector<mrflow::cfree::Geometry::Point> path;
     int P = robot_polygons.size();
-    // Center of first polygon
-    const auto &first_pol_id = robot_polygons[0];
-    path.push_back(simpleCfree->polygon_info_.center[first_pol_id]);
+    // Start state
+    // Note: start state = (x,y,o)
+    path.push_back(simpleCfree->createPoint(
+            start[0]*this->simpleCfree->M2px(),
+            start[1]*this->simpleCfree->M2px()));
+    //const auto &first_pol_id = robot_polygons[0];
+    //path.push_back(simpleCfree->polygon_info_.center[first_pol_id]);
 
     for(int p_seq  = 1; p_seq < P; ++p_seq){
         const auto &p_prev = robot_polygons[p_seq-1];
@@ -108,10 +123,16 @@ ProblemGenerator::createCenterline(
                 , p_curr);
         // add to path
         path.push_back(door_center);
-        path.push_back(pol_curr_center);
+        //path.push_back(pol_curr_center);
     }
-    if(path.size() == 1){ // Stays in polygon
-        path.push_back(simpleCfree->polygon_info_.center[first_pol_id]);
-    }
+    //if(path.size() == 1){ // Stays in polygon
+    //    path.push_back(simpleCfree->polygon_info_.center[first_pol_id]);
+    //
+
+    // Goal state
+    // Note: start state = (x,y,o)
+    path.push_back(simpleCfree->createPoint(
+            goal[0]*this->simpleCfree->M2px(),
+            goal[1]*this->simpleCfree->M2px() ));
     return path;
 }

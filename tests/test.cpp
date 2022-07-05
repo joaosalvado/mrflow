@@ -64,13 +64,13 @@ int main(int argc, char** argv) {
 
 
     auto path_generator = std::make_shared<mrflow::planner::ProblemGenerator>(sCfree);
-    auto mrpath_optim = path_generator->createMrPath(mrpath);
+/*    auto mrpath_optim = path_generator->createMrPath(start, goal, mrpath);
 
     int r = 0;
     for(auto robot_path : mrpath_optim){
         sCfree->loadMap(map_file + ".png");
         sCfree->plotPath(robot_path->ofreebit, robot_path->centerline, r++);
-    }
+    }*/
 
     return 0;
 }
